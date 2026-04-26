@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EvanAI">
+<title>EvanAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #ffffff;
+  --surface: #f4f4f5;
+  --surface2: #ececed;
+  --border: #e4e4e7;
+  --text: #09090b;
+  --muted: #71717a;
+  --muted2: #a1a1aa;
+  --accent: #18181b;
+  --blue: #2563eb;
+  --green: #16a34a;
+  --yellow: #ca8a04;
+  --red: #dc2626;
+  --green-bg: #dcfce7;
+  --yellow-bg: #fef9c3;
+  --red-bg: #fee2e2;
+  --blue-bg: #dbeafe;
+  --nav-h: 72px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LAYOUT ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: -webkit-fill-available;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 18px calc(var(--nav-h) + 16px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.screen.active { display: block; }
+.screen::-webkit-scrollbar { display: none; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: var(--nav-h);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding-top: 10px;
+  z-index: 100;
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted2);
+  min-width: 56px;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+
+.nav-tab.active { color: var(--blue); }
+.nav-icon { font-size: 24px; line-height: 1; }
+
+/* ── TOP BAR ── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(16px);
+  z-index: 10;
+}
+
+.page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+
+.add-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 22px;
+  font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  border: none; cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.add-btn:active { opacity: 0.7; }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 10px; }
+.card-white { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 2px 16px; margin-bottom: 10px; }
+.dark-card { background: var(--accent); color: white; border-radius: 20px; padding: 20px; margin-bottom: 12px; }
+
+.section-title { font-size: 16px; font-weight: 700; margin: 18px 0 10px; }
+
+/* ── PILLS ── */
+.pill {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 600;
+  white-space: nowrap; cursor: pointer;
+  border: none; outline: none;
+}
+.pill.ns { background: var(--surface); color: var(--muted); }
+.pill.ip { background: var(--yellow-bg); color: var(--yellow); }
+.pill.dn { background: var(--green-bg); color: var(--green); }
+.pill.ms { background: var(--red-bg); color: var(--red); }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); }
+
+/* ═══════════════════════════════
+   HOME
+═══════════════════════════════ */
+.greeting-wrap { padding: 8px 0 16px; }
+.greeting-sub { font-size: 14px; color: var(--muted); font-weight: 500; }
+.greeting-name { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.now-label { font-size: 11px; font-weight: 600; opacity: .55; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; color: white; display: flex; align-items: center; }
+.now-class { font-size: 22px; font-weight: 800; color: white; letter-spacing: -.3px; margin-bottom: 3px; }
+.now-teacher { font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 14px; }
+.prog-bar { height: 4px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.prog-fill { height: 100%; background: rgba(255,255,255,.65); border-radius: 3px; transition: width 1s; }
+.now-time { font-size: 11px; color: rgba(255,255,255,.45); }
+
+.next-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface); border-radius: 14px; margin-bottom: 20px; }
+.next-arrow { width: 34px; height: 34px; background: white; border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--muted); }
+.next-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 2px; }
+.next-class { font-size: 14px; font-weight: 700; }
+.next-time { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+.stats-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.stat-block { background: var(--surface); border-radius: 16px; padding: 16px 14px; }
+.stat-num { font-size: 30px; font-weight: 800; letter-spacing: -1px; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+.stat-warn { font-size: 11px; color: var(--yellow); font-weight: 600; margin-top: 2px; }
+
+.due-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; }
+.due-row + .due-row { border-top: 1px solid var(--border); }
+.due-name { font-size: 13px; font-weight: 600; }
+.due-class-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.due-red { font-size: 11px; font-weight: 700; color: var(--red); }
+.due-yellow { font-size: 11px; font-weight: 700; color: var(--yellow); }
+.due-green { font-size: 11px; font-weight: 700; color: var(--green); }
+
+/* ═══════════════════════════════
+   ASSIGNMENTS
+═══════════════════════════════ */
+.filter-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 18px; }
+.filter-scroll::-webkit-scrollbar { display: none; }
+.fchip { padding: 8px 16px; border-radius: 22px; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--muted); white-space: nowrap; border: none; cursor: pointer; flex-shrink: 0; font-family: 'Inter', sans-serif; }
+.fchip.on { background: var(--accent); color: white; }
+
+.todo-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; }
+.todo-row + .todo-row { border-top: 1px solid var(--border); }
+.circle-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
+.circle-check.checked { background: var(--green); border-color: var(--green); color: white; font-size: 12px; }
+.todo-label { flex: 1; font-size: 13px; font-weight: 500; }
+.todo-label.done-text { text-decoration: line-through; color: var(--muted2); }
+
+.asgn-card { background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 9px; }
+.asgn-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.asgn-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.asgn-due { font-size: 11px; color: var(--muted); }
+.asgn-bottom { display: flex; justify-content: space-between; align-items: center; }
+.class-badge { font-size: 11px; font-weight: 600; color: var(--blue); background: var(--blue-bg); padding: 4px 10px; border-radius: 8px; }
+.ai-mini-btn { font-size: 11px; font-weight: 600; color: var(--muted); background: white; border: 1px solid var(--border); padding: 5px 12px; border-radius: 9px; cursor: pointer; font-family: 'Inter', sans-serif; }
+.ai-mini-btn:active { opacity: .7; }
+
+/* ═══════════════════════════════
+   SCHEDULE
+═══════════════════════════════ */
+.day-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 2px; }
+.day-scroll::-webkit-scrollbar { display: none; }
+.day-chip { display: flex; flex-direction: column; align-items: center; padding: 9px 14px; border-radius: 14px; background: var(--surface); font-size: 10px; font-weight: 600; color: var(--muted); gap: 2px; cursor: pointer; flex-shrink: 0; transition: all .15s; border: none; font-family: 'Inter', sans-serif; }
+.day-chip .dn { font-size: 18px; font-weight: 800; color: var(--text); }
+.day-chip.on { background: var(--accent); color: rgba(255,255,255,.7); }
+.day-chip.on .dn { color: white; }
+
+.srow { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
+.srow + .srow { border-top: 1px solid var(--border); }
+.stime { font-size: 10px; color: var(--muted); width: 78px; flex-shrink: 0; line-height: 1.5; }
+.sinfo { flex: 1; }
+.sclass { font-size: 13px; font-weight: 600; }
+.steacher { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.now-badge { font-size: 9px; font-weight: 800; background: #4ade80; color: white; padding: 3px 8px; border-radius: 6px; letter-spacing: .06em; flex-shrink: 0; }
+
+/* ═══════════════════════════════
+   GRADES
+═══════════════════════════════ */
+.gpa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.gpa-blk { background: var(--accent); color: white; border-radius: 18px; padding: 18px 16px; text-align: center; }
+.gpa-lbl { font-size: 10px; font-weight: 600; opacity: .55; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.gpa-val { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; }
+.gpa-sub { font-size: 10px; opacity: .45; margin-top: 2px; }
+
+.grade-row { display: flex; align-items: center; gap: 13px; padding: 13px 0; cursor: pointer; }
+.grade-row + .grade-row { border-top: 1px solid var(--border); }
+.grade-row:active { opacity: .7; }
+.grade-bubble { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+.grade-bubble.A { background: var(--green-bg); color: var(--green); }
+.grade-bubble.B { background: var(--blue-bg); color: var(--blue); }
+.grade-bubble.C { background: var(--yellow-bg); color: var(--yellow); }
+.grade-bubble.D { background: var(--red-bg); color: var(--red); }
+.grade-info-col { flex: 1; }
+.grade-cn { font-size: 13px; font-weight: 600; }
+.grade-tn { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.grade-right-col { text-align: right; display: flex; align-items: center; gap: 6px; }
+.grade-pct { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+.chevron { color: var(--muted2); font-size: 16px; }
+
+/* ═══════════════════════════════
+   GRADE DETAIL (slide-in panel)
+═══════════════════════════════ */
+.detail-panel {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateX(100%);
+  width: 100%; max-width: 430px; height: 100%; background: white;
+  z-index: 200; display: flex; flex-direction: column;
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.detail-panel.open { transform: translateX(-50%) translateX(0); }
+
+.detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 90px; }
+.detail-scroll::-webkit-scrollbar { display: none; }
+
+.back-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+.back-btn { font-size: 15px; color: var(--blue); font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif; }
+
+.detail-hero { background: var(--accent); color: white; padding: 22px 20px 24px; }
+.detail-class { font-size: 22px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 3px; }
+.detail-teacher { font-size: 13px; opacity: .55; margin-bottom: 20px; }
+.detail-avg-row { display: flex; align-items: flex-end; justify-content: space-between; }
+.detail-avg-num { font-size: 56px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.detail-avg-lbl { font-size: 11px; opacity: .5; font-weight: 500; margin-bottom: 6px; }
+.detail-letter { font-size: 36px; font-weight: 800; background: rgba(255,255,255,.12); border-radius: 14px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
+
+.weight-section { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
+.weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.weight-name { font-size: 12px; font-weight: 600; width: 80px; flex-shrink: 0; }
+.weight-pct { font-size: 11px; color: var(--muted); width: 30px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 6px; background: var(--surface); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; }
+.weight-score { font-size: 13px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+
+.entries-section { padding: 16px 18px; }
+.cat-block { margin-bottom: 20px; }
+.cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.cat-lbl { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.cat-dot { width: 7px; height: 7px; border-radius: 50%; }
+.cat-avg-text { font-size: 13px; font-weight: 700; }
+
+.entry-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--surface); border-radius: 12px; margin-bottom: 6px; }
+.entry-name { font-size: 13px; font-weight: 500; }
+.entry-date { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.entry-score { font-size: 16px; font-weight: 800; letter-spacing: -.5px; }
+
+.edit-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: white; border-top: 1px solid var(--border); padding: 14px 18px 30px; z-index: 201; }
+.edit-bar-btn { width: 100%; padding: 15px; border-radius: 14px; background: var(--accent); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+/* ADD GRADE SHEET */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.sheet-backdrop.open { opacity: 1; pointer-events: all; }
+.bottom-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; background: white; border-radius: 24px 24px 0 0; padding: 20px 20px 40px; z-index: 301; transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.bottom-sheet.open { transform: translateX(-50%) translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+.field-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+.field-input { width: 100%; background: var(--surface); border: none; border-radius: 12px; padding: 13px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); margin-bottom: 14px; outline: none; }
+.cat-select-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.cat-chip { flex: 1; padding: 10px 6px; border-radius: 12px; background: var(--surface); font-size: 12px; font-weight: 600; text-align: center; color: var(--muted); cursor: pointer; border: 2px solid transparent; font-family: 'Inter', sans-serif; transition: all .15s; }
+.cat-chip.on { border-color: var(--accent); background: var(--accent); color: white; }
+.save-btn { width: 100%; padding: 15px; border-radius: 14px; background: var(--accent); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+/* ═══════════════════════════════
+   AI
+═══════════════════════════════ */
+#screen-ai { padding: 0; display: none; flex-direction: column; height: calc(100vh - var(--nav-h)); }
+#screen-ai.active { display: flex; }
+
+.ai-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.ai-h { font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+.ai-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.preset-row { display: flex; gap: 8px; padding: 12px 18px; overflow-x: auto; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.preset-row::-webkit-scrollbar { display: none; }
+.pchip { padding: 8px 14px; border-radius: 22px; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--text); white-space: nowrap; border: none; cursor: pointer; flex-shrink: 0; font-family: 'Inter', sans-serif; transition: all .15s; }
+.pchip:active { background: var(--accent); color: white; }
+
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+.chat-messages::-webkit-scrollbar { display: none; }
+
+.bubble-ai { background: var(--surface); border-radius: 18px 18px 18px 4px; padding: 12px 14px; font-size: 13px; line-height: 1.6; max-width: 86%; align-self: flex-start; }
+.bubble-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; padding: 12px 14px; font-size: 13px; line-height: 1.6; max-width: 86%; align-self: flex-end; }
+.ai-from { font-size: 10px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
+
+.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 14px; }
+.typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted2); animation: typing 1.2s infinite; }
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+.chat-input-row { display: flex; gap: 9px; padding: 12px 18px 16px; border-top: 1px solid var(--border); flex-shrink: 0; background: white; }
+.chat-box { flex: 1; background: var(--surface); border: none; border-radius: 22px; padding: 10px 16px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; color: var(--text); resize: none; max-height: 100px; }
+.send-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; cursor: pointer; transition: opacity .15s; }
+.send-circle:disabled { opacity: .4; }
+
+/* ── MODALS ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 400; display: none; align-items: flex-end; }
+.modal-backdrop.open { display: flex; }
+.modal { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; }
+.modal-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+.modal-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.modal-input { flex: 1; background: var(--surface); border: none; border-radius: 12px; padding: 13px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); outline: none; }
+.modal-btn { padding: 13px 20px; border-radius: 12px; background: var(--accent); color: white; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+.modal-cancel { width: 100%; padding: 13px; border-radius: 12px; background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; border: none; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px; }
+
+/* ── SETUP SCREEN ── */
+#setup-screen { position: fixed; inset: 0; background: white; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
+#setup-screen h1 { font-size: 32px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+#setup-screen p { font-size: 14px; color: var(--muted); margin-bottom: 32px; text-align: center; line-height: 1.5; }
+.setup-input { width: 100%; background: var(--surface); border: none; border-radius: 14px; padding: 16px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); outline: none; margin-bottom: 12px; }
+.setup-btn { width: 100%; padding: 16px; border-radius: 14px; background: var(--accent); color: white; font-size: 16px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+.setup-note { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div style="font-size:48px; margin-bottom:16px;">🤖</div>
+  <h1>EvanAI</h1>
+  <p>Your personal AI dashboard.<br>Enter your Anthropic API key to get started.</p>
+  <input class="setup-input" id="api-key-input" type="password" placeholder="sk-ant-..." />
+  <button class="setup-btn" onclick="saveApiKey()">Let's Go →</button>
+  <p class="setup-note">Your key is saved only on this device.<br>Never shared with anyone.</p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="greeting-wrap">
+      <div class="greeting-sub">Good <span id="time-of-day">morning</span>,</div>
+      <div class="greeting-name">Evan 👋</div>
+    </div>
+
+    <!-- Current class -->
+    <div class="dark-card" id="current-class-card">
+      <div class="now-label"><span class="live-dot"></span> Currently In</div>
+      <div class="now-class" id="home-current-class">—</div>
+      <div class="now-teacher" id="home-current-teacher">No class right now</div>
+      <div class="prog-bar"><div class="prog-fill" id="home-prog" style="width:0%"></div></div>
+      <div class="now-time" id="home-current-time"></div>
+    </div>
+
+    <!-- Next up -->
+    <div class="next-row">
+      <div class="next-arrow">→</div>
+      <div>
+        <div class="next-label">Next Up</div>
+        <div class="next-class" id="home-next-class">—</div>
+        <div class="next-time" id="home-next-time"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-2col">
+      <div class="stat-block">
+        <div class="stat-num" id="home-gpa">—</div>
+        <div class="stat-label">Current GPA</div>
+      </div>
+      <div class="stat-block" id="home-next-test-block">
+        <div class="stat-num" style="font-size:17px; margin-top:2px;" id="home-test-name">No tests</div>
+        <div class="stat-label" id="home-test-days"></div>
+      </div>
+    </div>
+
+    <!-- Due soon -->
+    <div class="section-title">Due Soon</div>
+    <div class="card-white" id="home-due-list">
+      <div class="due-row" style="justify-content:center; padding:16px 0;">
+        <span style="color:var(--muted); font-size:13px;">No assignments yet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSIGNMENTS -->
+  <div id="screen-work" class="screen">
+    <div class="top-bar">
+      <div class="page-title">Assignments</div>
+      <button class="add-btn" onclick="openAddAssignment()">+</button>
+    </div>
+
+    <div class="filter-scroll">
+      <button class="fchip on" onclick="filterAssign(this,'all')">All</button>
+      <button class="fchip" onclick="filterAssign(this,'ns')">Not Started</button>
+      <button class="fchip" onclick="filterAssign(this,'ip')">In Progress</button>
+      <button class="fchip" onclick="filterAssign(this,'dn')">Done</button>
+      <button class="fchip" onclick="filterAssign(this,'ms')">Missing</button>
+    </div>
+
+    <div class="section-title">To-Do</div>
+    <div class="card-white" id="todo-list">
+      <div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No assignments yet — tap + to add</div>
+    </div>
+
+    <div class="section-title">Details</div>
+    <div id="assign-details"></div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div id="screen-schedule" class="screen">
+    <div class="top-bar">
+      <div class="page-title">Schedule</div>
+    </div>
+
+    <div class="dark-card">
+      <div class="now-label"><span class="live-dot"></span> Currently In</div>
+      <div class="now-class" id="sched-current-class">—</div>
+      <div class="now-teacher" id="sched-current-teacher">No class right now</div>
+      <div class="prog-bar"><div class="prog-fill" id="sched-prog" style="width:0%"></div></div>
+      <div class="now-time" id="sched-next-text"></div>
+    </div>
+
+    <div class="day-scroll" id="day-tabs"></div>
+    <div class="card-white" id="schedule-list"></div>
+  </div>
+
+  <!-- GRADES -->
+  <div id="screen-grades" class="screen">
+    <div class="top-bar">
+      <div class="page-title">Grades</div>
+      <button class="add-btn" onclick="openAddClass()">+</button>
+    </div>
+
+    <div class="gpa-grid">
+      <div class="gpa-blk">
+        <div class="gpa-lbl">GPA</div>
+        <div class="gpa-val" id="overall-gpa">—</div>
+        <div class="gpa-sub">Weighted</div>
+      </div>
+      <div class="gpa-blk">
+        <div class="gpa-lbl">Average</div>
+        <div class="gpa-val" id="overall-avg">—</div>
+        <div class="gpa-sub">All classes</div>
+      </div>
+    </div>
+
+    <div class="card-white" id="grades-list">
+      <div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No classes yet — tap + to add</div>
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div id="screen-ai" class="screen">
+    <div class="ai-header">
+      <div class="ai-h">AI Assistant 🤖</div>
+      <div class="ai-sub">Claude · knows your full context</div>
+    </div>
+    <div class="preset-row">
+      <button class="pchip" onclick="preset('Explain a concept I\'m struggling with in school')">📖 Explain concept</button>
+      <button class="pchip" onclick="preset('Help me draft a respectful email to a teacher')">✉️ Teacher email</button>
+      <button class="pchip" onclick="preset('Help me study for an upcoming test')">📝 Help me study</button>
+      <button class="pchip" onclick="preset('Help me calculate what grade I need on my next assignment to reach my goal average')">📊 Grade calc</button>
+      <button class="pchip" onclick="preset('Help me with BackwardsNYC, my hoodie brand')">👕 BackwardsNYC</button>
+      <button class="pchip" onclick="preset('Help me with Vestis, my custom suit business')">👔 Vestis</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="bubble-ai">
+        <div class="ai-from">EvanAI</div>
+        Hey Evan! I'm your personal AI — I know your schedule, your classes, your businesses, and your goals. What do you need?
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-box" id="chat-input" placeholder="Ask anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-circle" id="send-btn" onclick="sendMessage()">↑</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-tab active" onclick="goTo('home',this)"><div class="nav-icon">🏠</div>Home</div>
+    <div class="nav-tab" onclick="goTo('work',this)"><div class="nav-icon">📚</div>Work</div>
+    <div class="nav-tab" onclick="goTo('schedule',this)"><div class="nav-icon">🗓️</div>Schedule</div>
+    <div class="nav-tab" onclick="goTo('grades',this)"><div class="nav-icon">📊</div>Grades</div>
+    <div class="nav-tab" onclick="goTo('ai',this)"><div class="nav-icon">🤖</div>AI</div>
+  </div>
+</div>
+
+<!-- GRADE DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-scroll" id="detail-scroll">
+    <div class="back-header">
+      <button class="back-btn" onclick="closeDetail()">← Grades</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+  <div class="edit-bar">
+    <button class="edit-bar-btn" onclick="openAddGrade()">+ Edit Grades</button>
+  </div>
+</div>
+
+<!-- ADD GRADE SHEET -->
+<div class="sheet-backdrop" id="grade-sheet-backdrop" onclick="closeAddGrade()">
+  <div class="bottom-sheet" id="grade-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add a Grade</div>
+    <div class="field-label">Assignment Name</div>
+    <input class="field-input" id="grade-name-input" placeholder="e.g. Chapter 8 Test" />
+    <div class="field-label">Score (out of 100)</div>
+    <input class="field-input" id="grade-score-input" type="number" placeholder="e.g. 88" min="0" max="100" />
+    <div class="field-label">Category</div>
+    <div class="cat-select-row" id="cat-select-row"></div>
+    <div class="field-label">Date (optional)</div>
+    <input class="field-input" id="grade-date-input" placeholder="e.g. Apr 30" />
+    <button class="save-btn" onclick="saveGrade()">Save Grade</button>
+  </div>
+</div>
+
+<!-- ADD ASSIGNMENT MODAL -->
+<div class="modal-backdrop" id="assign-modal">
+  <div class="modal">
+    <div class="modal-title">Add Assignment</div>
+    <div class="field-label">Assignment Name</div>
+    <input class="field-input" id="assign-name" placeholder="e.g. English Essay" style="margin-bottom:12px;" />
+    <div class="field-label">Class</div>
+    <input class="field-input" id="assign-class" placeholder="e.g. English" style="margin-bottom:12px;" />
+    <div class="field-label">Due Date</div>
+    <input class="field-input" id="assign-due" placeholder="e.g. Tomorrow, Monday, May 5" style="margin-bottom:12px;" />
+    <div class="field-label">Status</div>
+    <div class="cat-select-row">
+      <div class="cat-chip on" data-val="ns" onclick="selectStatus(this)">Not Started</div>
+      <div class="cat-chip" data-val="ip" onclick="selectStatus(this)">In Progress</div>
+      <div class="cat-chip" data-val="ms" onclick="selectStatus(this)">Missing</div>
+    </div>
+    <button class="modal-btn" style="width:100%; margin-top:4px;" onclick="saveAssignment()">Add Assignment</button>
+    <button class="modal-cancel" onclick="closeModal('assign-modal')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD CLASS MODAL -->
+<div class="modal-backdrop" id="class-modal">
+  <div class="modal">
+    <div class="modal-title">Add Class</div>
+    <div class="field-label">Class Name</div>
+    <input class="field-input" id="class-name-input" placeholder="e.g. Geometry" style="margin-bottom:12px;" />
+    <div class="field-label">Teacher</div>
+    <input class="field-input" id="class-teacher-input" placeholder="e.g. Dr. Shahar" style="margin-bottom:12px;" />
+    <div class="field-label">Credits</div>
+    <input class="field-input" id="class-credits-input" type="number" placeholder="e.g. 1" min="0.5" max="5" step="0.5" style="margin-bottom:12px;" />
+    <div class="field-label">Categories (name:weight%, separate with comma)</div>
+    <input class="field-input" id="class-cats-input" placeholder="Tests:40,Homework:30,Quizzes:30" style="margin-bottom:12px;" />
+    <button class="modal-btn" style="width:100%; margin-top:4px;" onclick="saveClass()">Add Class</button>
+    <button class="modal-cancel" onclick="closeModal('class-modal')">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SCHEDULE DATA (from Evan's real schedule)
+// ═══════════════════════════════════════════════════════
+const SCHEDULE = {
+  1: [ // Monday
+    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
+    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
+    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
+    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Rm 301', start:'10:30', end:'11:16' },
+    { name:'Lunch', teacher:'', room:'', start:'11:20', end:'12:06', isBreak:true },
+    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'12:10', end:'12:56' },
+    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'1:00', end:'1:46' },
+    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:50', end:'2:36' },
+    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
+    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'3:00', end:'3:46' },
+    { name:'Physical Education', teacher:'Mr. Kennedy', room:'Gym', start:'3:50', end:'4:36' },
+  ],
+  2: [ // Tuesday
+    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
+    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
+    { name:'Visual Arts 2HN', teacher:'Ms. Erdos', room:'Art Rm', start:'9:40', end:'10:26' },
+    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'2nd FL Lib', start:'10:30', end:'11:16' },
+    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'11:20', end:'12:06' },
+    { name:'Lunch', teacher:'', room:'', start:'12:10', end:'12:56', isBreak:true },
+    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'1:00', end:'1:46' },
+    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'1:50', end:'2:36' },
+    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
+    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 412', start:'3:00', end:'3:46' },
+    { name:'SICHA 2HN', teacher:'Rabbi Churba', room:'Rm 321', start:'3:50', end:'4:36' },
+  ],
+  3: [ // Wednesday
+    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
+    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
+    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
+    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Rm 324', start:'10:30', end:'11:16' },
+    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'11:20', end:'12:06' },
+    { name:'Lunch', teacher:'', room:'', start:'12:10', end:'12:56', isBreak:true },
+    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'1:00', end:'1:46' },
+    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:50', end:'2:36' },
+    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
+    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'3:00', end:'3:46' },
+    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'3:50', end:'4:36' },
+  ],
+  4: [ // Thursday
+    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
+    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
+    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
+    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'2nd FL Lib', start:'10:30', end:'11:16' },
+    { name:'Lunch / Mathletes', teacher:'Ms. Issever', room:'Rm 204', start:'11:20', end:'12:06', isBreak:true },
+    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'12:10', end:'12:56' },
+    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:00', end:'1:46' },
+    { name:'Visual Arts 2HN', teacher:'Ms. Erdos', room:'Art Rm', start:'1:50', end:'2:36' },
+    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
+    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'3:00', end:'3:46' },
+    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'3:50', end:'4:36' },
+  ],
+  5: [ // Friday
+    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:40' },
+    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'8:40', end:'9:26' },
+    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'9:30', end:'10:16' },
+    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Art Rm', start:'10:20', end:'11:06' },
+    { name:'Lunch', teacher:'', room:'', start:'11:10', end:'11:46', isBreak:true },
+    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'11:50', end:'12:36' },
+    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'12:40', end:'1:26' },
+  ],
+};
+
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// ═══════════════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════════════
+function save(key, val) { try { localStorage.setItem('evanai_'+key, JSON.stringify(val)); } catch(e){} }
+function load(key, def) { try { const v = localStorage.getItem('evanai_'+key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+
+let assignments = load('assignments', []);
+let classes = load('classes', []);
+let tests = load('tests', []);
+let currentClassId = null;
+let currentFilter = 'all';
+let selectedStatus = 'ns';
+let selectedCat = 0;
+let chatHistory = [];
+
+// ═══════════════════════════════════════════════════════
+//  SETUP / API KEY
+// ═══════════════════════════════════════════════════════
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-ant-')) { alert('That doesn\'t look right. Make sure it starts with sk-ant-'); return; }
+  save('apikey', key);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initApp();
+}
+
+function getApiKey() { return load('apikey', ''); }
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goTo(id, tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  tab.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+//  TIME UTILS
+// ═══════════════════════════════════════════════════════
+function parseTime(t) {
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+
+function formatTime(t) {
+  const h = Math.floor(t/60), m = t%60;
+  const ampm = h>=12?'PM':'AM';
+  const hh = h>12?h-12:h===0?12:h;
+  return `${hh}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+function getNowMinutes() {
+  const now = new Date();
+  return now.getHours()*60+now.getMinutes();
+}
+
+function getCurrentDay() { return new Date().getDay(); }
+
+// ═══════════════════════════════════════════════════════
+//  CURRENT CLASS LOGIC
+// ═══════════════════════════════════════════════════════
+function getCurrentAndNext() {
+  const day = getCurrentDay();
+  const daySchedule = SCHEDULE[day];
+  if (!daySchedule) return { current: null, next: null, progress: 0 };
+
+  const now = getNowMinutes();
+  let current = null, next = null, progress = 0;
+
+  for (let i = 0; i < daySchedule.length; i++) {
+    const p = daySchedule[i];
+    const s = parseTime(p.start), e = parseTime(p.end);
+    if (now >= s && now < e) {
+      current = p;
+      progress = Math.round(((now - s) / (e - s)) * 100);
+      if (i+1 < daySchedule.length) next = daySchedule[i+1];
+      break;
+    }
+    if (now < s && !next) next = p;
+  }
+  return { current, next, progress };
+}
+
+function updateCurrentClass() {
+  const { current, next, progress } = getCurrentAndNext();
+  const hour = new Date().getHours();
+
+  // time of day
+  document.getElementById('time-of-day').textContent = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+
+  // home
+  const hcc = document.getElementById('home-current-class');
+  const hct = document.getElementById('home-current-teacher');
+  const htime = document.getElementById('home-current-time');
+  const hprog = document.getElementById('home-prog');
+
+  if (current && !current.isBreak) {
+    hcc.textContent = current.name;
+    hct.textContent = current.teacher + (current.room ? ' · ' + current.room : '');
+    htime.textContent = current.start + ' — ' + current.end + ' · ' + progress + '% through';
+    hprog.style.width = progress + '%';
+  } else {
+    const day = getCurrentDay();
+    hcc.textContent = day === 0 || day === 6 ? 'Weekend' : 'Nothing right now';
+    hct.textContent = '';
+    htime.textContent = '';
+    hprog.style.width = '0%';
+  }
+
+  if (next && !next.isBreak) {
+    document.getElementById('home-next-class').textContent = next.name;
+    document.getElementById('home-next-time').textContent = next.teacher + ' · ' + next.room + ' · ' + next.start;
+  } else if (next && next.isBreak) {
+    document.getElementById('home-next-class').textContent = next.name;
+    document.getElementById('home-next-time').textContent = next.start;
+  } else {
+    document.getElementById('home-next-class').textContent = 'Nothing coming up';
+    document.getElementById('home-next-time').textContent = '';
+  }
+
+  // schedule screen
+  const scc = document.getElementById('sched-current-class');
+  const sct = document.getElementById('sched-current-teacher');
+  const sprog = document.getElementById('sched-prog');
+  const snext = document.getElementById('sched-next-text');
+
+  if (current && !current.isBreak) {
+    scc.textContent = current.name;
+    sct.textContent = current.teacher + ' · ' + current.room;
+    sprog.style.width = progress + '%';
+    snext.textContent = next ? 'Next: ' + next.name + ' at ' + next.start : 'Last class of the day';
+  } else {
+    scc.textContent = 'Nothing right now';
+    sct.textContent = '';
+    sprog.style.width = '0%';
+    snext.textContent = next ? 'Next: ' + next.name + ' at ' + next.start : '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCHEDULE RENDER
+// ═══════════════════════════════════════════════════════
+function renderSchedule(dayIndex) {
+  const daySchedule = SCHEDULE[dayIndex];
+  const now = getNowMinutes();
+  const today = getCurrentDay();
+  let html = '';
+
+  if (!daySchedule) {
+    html = '<div style="padding:20px; text-align:center; color:var(--muted); font-size:13px;">No classes</div>';
+  } else {
+    daySchedule.forEach(p => {
+      const s = parseTime(p.start);
+      const e = parseTime(p.end);
+      const isCurrent = dayIndex === today && now >= s && now < e;
+      const color = p.isBreak ? 'var(--muted)' : 'var(--text)';
+      html += `<div class="srow">
+        <div class="stime">${p.start}${p.end ? '–'+p.end : ''}</div>
+        <div class="sinfo">
+          <div class="sclass" style="color:${color}">${p.name}</div>
+          ${p.teacher ? `<div class="steacher">${p.teacher}${p.room ? ' · '+p.room : ''}</div>` : ''}
+        </div>
+        ${isCurrent ? '<div class="now-badge">NOW</div>' : ''}
+      </div>`;
+    });
+  }
+
+  document.getElementById('schedule-list').innerHTML = html;
+}
+
+function buildDayTabs() {
+  const today = getCurrentDay();
+  const days = [{d:1,l:'Mon'},{d:2,l:'Tue'},{d:3,l:'Wed'},{d:4,l:'Thu'},{d:5,l:'Fri'}];
+  const now = new Date();
+  let html = '';
+  days.forEach(({d,l}) => {
+    const diff = d - today;
+    const date = new Date(now); date.setDate(now.getDate() + diff);
+    const dateNum = date.getDate();
+    const isToday = d === today;
+    html += `<button class="day-chip ${isToday?'on':''}" onclick="selectDay(this,${d})">${l}<span class="dn">${dateNum}</span></button>`;
+  });
+  document.getElementById('day-tabs').innerHTML = html;
+  const activeDay = today >= 1 && today <= 5 ? today : 1;
+  renderSchedule(activeDay);
+}
+
+function selectDay(el, dayIndex) {
+  document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderSchedule(dayIndex);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ASSIGNMENTS
+// ═══════════════════════════════════════════════════════
+const statusMap = { ns:'Not Started', ip:'In Progress', dn:'Done', ms:'Missing' };
+const statusClass = { ns:'ns', ip:'ip', dn:'dn', ms:'ms' };
+
+function renderAssignments() {
+  const filtered = currentFilter === 'all' ? assignments : assignments.filter(a => a.status === currentFilter);
+
+  // todo list
+  let todoHtml = filtered.length === 0
+    ? '<div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No assignments — tap + to add</div>'
+    : '';
+
+  filtered.forEach((a, i) => {
+    const realIdx = assignments.indexOf(a);
+    const isDone = a.status === 'dn';
+    todoHtml += `<div class="todo-row">
+      <div class="circle-check ${isDone?'checked':''}" onclick="toggleDone(${realIdx})">${isDone?'✓':''}</div>
+      <div class="todo-label ${isDone?'done-text':''}">${a.name}</div>
+      <button class="pill ${statusClass[a.status]}" onclick="cycleStatus(${realIdx})">${statusMap[a.status]} ▾</button>
+    </div>`;
+  });
+  document.getElementById('todo-list').innerHTML = todoHtml;
+
+  // detail cards
+  let detailHtml = '';
+  filtered.forEach((a) => {
+    const realIdx = assignments.indexOf(a);
+    detailHtml += `<div class="asgn-card">
+      <div class="asgn-top">
+        <div>
+          <div class="asgn-name">${a.name}</div>
+          <div class="asgn-due">Due ${a.due}${a.teacher ? ' · ' + a.teacher : ''}</div>
+        </div>
+        <button class="pill ${statusClass[a.status]}" onclick="cycleStatus(${realIdx})">${statusMap[a.status]} ▾</button>
+      </div>
+      <div class="asgn-bottom">
+        <div class="class-badge">${a.className}</div>
+        <button class="ai-mini-btn" onclick="askAIAbout('${a.name}', '${a.className}')">Ask AI →</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('assign-details').innerHTML = detailHtml || '<div style="text-align:center; color:var(--muted); font-size:13px; padding:20px 0;">No assignments match this filter</div>';
+
+  // update home due soon
+  updateHomeDue();
+}
+
+function toggleDone(idx) {
+  assignments[idx].status = assignments[idx].status === 'dn' ? 'ns' : 'dn';
+  save('assignments', assignments);
+  renderAssignments();
+}
+
+function cycleStatus(idx) {
+  const order = ['ns','ip','dn','ms'];
+  const cur = order.indexOf(assignments[idx].status);
+  assignments[idx].status = order[(cur+1)%order.length];
+  save('assignments', assignments);
+  renderAssignments();
+}
+
+function filterAssign(el, filter) {
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  currentFilter = filter;
+  renderAssignments();
+}
+
+function updateHomeDue() {
+  const pending = assignments.filter(a => a.status !== 'dn').slice(0,3);
+  if (pending.length === 0) {
+    document.getElementById('home-due-list').innerHTML = '<div class="due-row" style="justify-content:center;padding:16px 0;"><span style="color:var(--muted);font-size:13px;">All caught up 🎉</span></div>';
+    return;
+  }
+  let html = '';
+  pending.forEach(a => {
+    html += `<div class="due-row">
+      <div><div class="due-name">${a.name}</div><div class="due-class-label">${a.className}</div></div>
+      <div class="due-red">${a.due}</div>
+    </div>`;
+  });
+  document.getElementById('home-due-list').innerHTML = html;
+}
+
+function openAddAssignment() {
+  document.getElementById('assign-name').value = '';
+  document.getElementById('assign-class').value = '';
+  document.getElementById('assign-due').value = '';
+  selectedStatus = 'ns';
+  document.querySelectorAll('#assign-modal .cat-chip').forEach(c => { c.classList.toggle('on', c.dataset.val === 'ns'); });
+  document.getElementById('assign-modal').classList.add('open');
+}
+
+function selectStatus(el) {
+  document.querySelectorAll('#assign-modal .cat-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  selectedStatus = el.dataset.val;
+}
+
+function saveAssignment() {
+  const name = document.getElementById('assign-name').value.trim();
+  const cls = document.getElementById('assign-class').value.trim();
+  const due = document.getElementById('assign-due').value.trim();
+  if (!name) { alert('Please enter an assignment name'); return; }
+  assignments.push({ name, className: cls||'General', due: due||'TBD', status: selectedStatus });
+  save('assignments', assignments);
+  closeModal('assign-modal');
+  renderAssignments();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GRADES
+// ═══════════════════════════════════════════════════════
+function getLetterGrade(avg) {
+  if (avg >= 93) return 'A';
+  if (avg >= 90) return 'A-';
+  if (avg >= 87) return 'B+';
+  if (avg >= 83) return 'B';
+  if (avg >= 80) return 'B-';
+  if (avg >= 77) return 'C+';
+  if (avg >= 73) return 'C';
+  if (avg >= 70) return 'C-';
+  return 'D';
+}
+
+function getLetterClass(letter) {
+  if (letter.startsWith('A')) return 'A';
+  if (letter.startsWith('B')) return 'B';
+  if (letter.startsWith('C')) return 'C';
+  return 'D';
+}
+
+function calcClassAvg(cls) {
+  if (!cls.categories || cls.categories.length === 0) return null;
+  let total = 0, totalWeight = 0;
+  cls.categories.forEach(cat => {
+    if (cat.grades && cat.grades.length > 0) {
+      const avg = cat.grades.reduce((a,b) => a+b.score, 0) / cat.grades.length;
+      total += avg * (cat.weight / 100);
+      totalWeight += cat.weight;
+    }
+  });
+  if (totalWeight === 0) return null;
+  return Math.round(total * (100 / totalWeight) * 10) / 10;
+}
+
+function calcGPA(avg) {
+  if (avg >= 93) return 4.0;
+  if (avg >= 90) return 3.7;
+  if (avg >= 87) return 3.3;
+  if (avg >= 83) return 3.0;
+  if (avg >= 80) return 2.7;
+  if (avg >= 77) return 2.3;
+  if (avg >= 73) return 2.0;
+  if (avg >= 70) return 1.7;
+  return 1.0;
+}
+
+function renderGrades() {
+  if (classes.length === 0) {
+    document.getElementById('grades-list').innerHTML = '<div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No classes yet — tap + to add</div>';
+    document.getElementById('overall-gpa').textContent = '—';
+    document.getElementById('overall-avg').textContent = '—';
+    return;
+  }
+
+  let totalGPA = 0, totalCredits = 0, totalAvg = 0, classCount = 0;
+  let html = '';
+
+  classes.forEach((cls, idx) => {
+    const avg = calcClassAvg(cls);
+    const letter = avg !== null ? getLetterGrade(avg) : '—';
+    const lClass = avg !== null ? getLetterClass(letter) : 'B';
+    const displayAvg = avg !== null ? avg : '—';
+
+    if (avg !== null) {
+      const credits = cls.credits || 1;
+      totalGPA += calcGPA(avg) * credits;
+      totalCredits += credits;
+      totalAvg += avg;
+      classCount++;
+    }
+
+    html += `<div class="grade-row" onclick="openDetail(${idx})">
+      <div class="grade-bubble ${lClass}">${letter}</div>
+      <div class="grade-info-col">
+        <div class="grade-cn">${cls.name}</div>
+        <div class="grade-tn">${cls.teacher}</div>
+      </div>
+      <div class="grade-right-col">
+        <div class="grade-pct">${displayAvg}</div>
+        <div class="chevron">›</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('grades-list').innerHTML = html;
+
+  if (totalCredits > 0) {
+    document.getElementById('overall-gpa').textContent = (totalGPA/totalCredits).toFixed(2);
+  }
+  if (classCount > 0) {
+    document.getElementById('overall-avg').textContent = (totalAvg/classCount).toFixed(1);
+  }
+
+  // update home GPA
+  if (totalCredits > 0) document.getElementById('home-gpa').textContent = (totalGPA/totalCredits).toFixed(2);
+}
+
+function openAddClass() {
+  document.getElementById('class-name-input').value = '';
+  document.getElementById('class-teacher-input').value = '';
+  document.getElementById('class-credits-input').value = '1';
+  document.getElementById('class-cats-input').value = 'Tests:40,Homework:30,Quizzes:30';
+  document.getElementById('class-modal').classList.add('open');
+}
+
+function saveClass() {
+  const name = document.getElementById('class-name-input').value.trim();
+  const teacher = document.getElementById('class-teacher-input').value.trim();
+  const credits = parseFloat(document.getElementById('class-credits-input').value) || 1;
+  const catsRaw = document.getElementById('class-cats-input').value.trim();
+
+  if (!name) { alert('Enter a class name'); return; }
+
+  const categories = catsRaw.split(',').map(c => {
+    const [n,w] = c.trim().split(':');
+    return { name: n.trim(), weight: parseFloat(w)||0, grades:[] };
+  });
+
+  classes.push({ name, teacher, credits, categories });
+  save('classes', classes);
+  closeModal('class-modal');
+  renderGrades();
+}
+
+// ─── DETAIL PANEL ───
+function openDetail(idx) {
+  currentClassId = idx;
+  const cls = classes[idx];
+  const avg = calcClassAvg(cls);
+  const letter = avg !== null ? getLetterGrade(avg) : '—';
+  const lClass = avg !== null ? getLetterClass(letter) : 'B';
+
+  let catWeightHtml = '';
+  const catColors = ['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
+  cls.categories.forEach((cat, ci) => {
+    const catAvg = cat.grades.length > 0 ? Math.round(cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length) : '—';
+    const barW = Math.min(cat.weight, 100);
+    catWeightHtml += `<div class="weight-row">
+      <div class="weight-name">${cat.name}</div>
+      <div class="weight-pct">${cat.weight}%</div>
+      <div class="bar-track"><div class="bar-fill" style="background:${catColors[ci%catColors.length]};width:${barW}%"></div></div>
+      <div class="weight-score" style="color:${catColors[ci%catColors.length]}">${catAvg}</div>
+    </div>`;
+  });
+
+  let entriesHtml = '';
+  cls.categories.forEach((cat, ci) => {
+    const catAvg = cat.grades.length > 0 ? Math.round(cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length) : '—';
+    let gradesHtml = cat.grades.length === 0
+      ? '<div style="padding:10px 14px; color:var(--muted); font-size:12px;">No grades yet</div>'
+      : '';
+
+    cat.grades.forEach(g => {
+      const scoreColor = g.score >= 90 ? 'var(--green)' : g.score >= 80 ? 'var(--blue)' : g.score >= 70 ? 'var(--yellow)' : 'var(--red)';
+      gradesHtml += `<div class="entry-row">
+        <div><div class="entry-name">${g.name}</div>${g.date ? `<div class="entry-date">${g.date}</div>` : ''}</div>
+        <div class="entry-score" style="color:${scoreColor}">${g.score}</div>
+      </div>`;
+    });
+
+    entriesHtml += `<div class="cat-block">
+      <div class="cat-header">
+        <div class="cat-lbl"><div class="cat-dot" style="background:${catColors[ci%catColors.length]}"></div>${cat.name}</div>
+        <div class="cat-avg-text">Avg: ${catAvg}</div>
+      </div>
+      ${gradesHtml}
+    </div>`;
+  });
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-class">${cls.name}</div>
+      <div class="detail-teacher">${cls.teacher}</div>
+      <div class="detail-avg-row">
+        <div>
+          <div class="detail-avg-lbl">Current Average</div>
+          <div class="detail-avg-num">${avg !== null ? avg : '—'}</div>
+        </div>
+        <div class="detail-letter">${letter}</div>
+      </div>
+    </div>
+    <div class="weight-section">
+      <div class="section-title" style="margin:0 0 12px;">Category Breakdown</div>
+      ${catWeightHtml}
+    </div>
+    <div class="entries-section">${entriesHtml}</div>
+  `;
+
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closeDetail() { document.getElementById('detail-panel').classList.remove('open'); }
+
+function openAddGrade() {
+  if (currentClassId === null) return;
+  const cls = classes[currentClassId];
+  document.getElementById('grade-name-input').value = '';
+  document.getElementById('grade-score-input').value = '';
+  document.getElementById('grade-date-input').value = '';
+
+  const catColors = ['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
+  let catHtml = '';
+  cls.categories.forEach((cat, i) => {
+    catHtml += `<div class="cat-chip ${i===0?'on':''}" onclick="selectGradeCat(this,${i})" style="${i===0?'border-color:var(--accent);background:var(--accent);color:white':''}">${cat.name}</div>`;
+  });
+  document.getElementById('cat-select-row').innerHTML = catHtml;
+  selectedCat = 0;
+
+  document.getElementById('grade-sheet-backdrop').classList.add('open');
+  document.getElementById('grade-sheet').classList.add('open');
+}
+
+function selectGradeCat(el, idx) {
+  document.querySelectorAll('#cat-select-row .cat-chip').forEach(c => { c.classList.remove('on'); c.style.borderColor='transparent'; c.style.background='var(--surface)'; c.style.color='var(--muted)'; });
+  el.classList.add('on');
+  el.style.borderColor = 'var(--accent)';
+  el.style.background = 'var(--accent)';
+  el.style.color = 'white';
+  selectedCat = idx;
+}
+
+function closeAddGrade() {
+  document.getElementById('grade-sheet-backdrop').classList.remove('open');
+  document.getElementById('grade-sheet').classList.remove('open');
+}
+
+function saveGrade() {
+  if (currentClassId === null) return;
+  const name = document.getElementById('grade-name-input').value.trim();
+  const score = parseFloat(document.getElementById('grade-score-input').value);
+  const date = document.getElementById('grade-date-input').value.trim();
+  if (!name) { alert('Enter assignment name'); return; }
+  if (isNaN(score) || score < 0 || score > 100) { alert('Enter a valid score (0-100)'); return; }
+  classes[currentClassId].categories[selectedCat].grades.push({ name, score, date });
+  save('classes', classes);
+  closeAddGrade();
+  openDetail(currentClassId);
+  renderGrades();
+}
+
+// ═══════════════════════════════════════════════════════
+//  AI CHAT
+// ═══════════════════════════════════════════════════════
+function buildSystemPrompt() {
+  const now = new Date();
+  const day = DAY_NAMES[now.getDay()];
+  const time = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+  const { current, next } = getCurrentAndNext();
+
+  let classInfo = classes.map(c => {
+    const avg = calcClassAvg(c);
+    return `${c.name} (${c.teacher}): ${avg !== null ? avg + '%' : 'no grades yet'}`;
+  }).join(', ') || 'No classes added yet';
+
+  let pendingWork = assignments.filter(a => a.status !== 'dn').map(a => `${a.name} (${a.className}, due ${a.due})`).join(', ') || 'None';
+
+  return `You are EvanAI, a personal AI assistant built specifically for Evan Mosseri, a 10th grade student at a Jewish day school in Brooklyn, NY.
+
+EVAN'S PROFILE:
+- Grade 10, Homeroom 2-HN, Semester 2
+- Ambitious, entrepreneurial, wants to build wealth and make his family proud
+- Co-founded BackwardsNYC (hoodie brand) with his brother Mark, serves as Creative Director
+- Building Vestis (custom suit e-commerce business)
+- Interested in finance, business, aviation, luxury travel
+- Plays football and basketball
+- Has siblings: Ray, Jacob, Mark, Michael, Sarah
+- Grandmother: Nona
+
+RIGHT NOW:
+- It's ${day} at ${time}
+- Current class: ${current ? current.name + ' with ' + current.teacher : 'No class right now'}
+- Next class: ${next ? next.name + ' at ' + next.start : 'None'}
+
+HIS CLASSES:
+${classInfo}
+
+PENDING ASSIGNMENTS:
+${pendingWork}
+
+COMMUNICATION STYLE:
+- Be direct, casual, smart, and human
+- Do NOT sound robotic or overly formal
+- Keep responses concise unless depth is needed
+- Be honest — don't just agree with him if he's wrong
+- Sound like a knowledgeable friend, not a corporate assistant
+- He often wants: shorter responses, direct answers, things that sound like him`;
+}
+
+async function sendMessage(overrideText) {
+  const input = document.getElementById('chat-input');
+  const text = overrideText || input.value.trim();
+  if (!text) return;
+
+  const apiKey = getApiKey();
+  if (!apiKey) { alert('No API key found. Please refresh and enter your key.'); return; }
+
+  // add user message
+  addMessage(text, 'user');
+  if (!overrideText) { input.value = ''; input.style.height = 'auto'; }
+  document.getElementById('send-btn').disabled = true;
+
+  // add typing indicator
+  const typingId = 'typing-' + Date.now();
+  const typingEl = document.createElement('div');
+  typingEl.className = 'bubble-ai';
+  typingEl.id = typingId;
+  typingEl.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  document.getElementById('chat-messages').appendChild(typingEl);
+  scrollChat();
+
+  chatHistory.push({ role:'user', content: text });
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: buildSystemPrompt(),
+        messages: chatHistory
+      })
+    });
+
+    const data = await res.json();
+    typingEl.remove();
+
+    if (data.content && data.content[0]) {
+      const reply = data.content[0].text;
+      chatHistory.push({ role:'assistant', content: reply });
+      addMessage(reply, 'ai');
+    } else {
+      addMessage('Something went wrong. Try again.', 'ai');
+    }
+  } catch(e) {
+    typingEl.remove();
+    addMessage('Connection error. Check your internet and try again.', 'ai');
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  scrollChat();
+}
+
+function addMessage(text, role) {
+  const el = document.createElement('div');
+  el.className = role === 'user' ? 'bubble-user' : 'bubble-ai';
+  if (role === 'ai') el.innerHTML = `<div class="ai-from">EvanAI</div>${text.replace(/\n/g,'<br>')}`;
+  else el.textContent = text;
+  document.getElementById('chat-messages').appendChild(el);
+  scrollChat();
+}
+
+function scrollChat() {
+  const c = document.getElementById('chat-messages');
+  c.scrollTop = c.scrollHeight;
+}
+
+function preset(text) {
+  goTo('ai', document.querySelector('.nav-tab:last-child'));
+  setTimeout(() => sendMessage(text), 100);
+}
+
+function askAIAbout(assignName, className) {
+  goTo('ai', document.querySelector('.nav-tab:last-child'));
+  setTimeout(() => sendMessage(`Help me with my ${className} assignment: ${assignName}`), 100);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+function initApp() {
+  updateCurrentClass();
+  setInterval(updateCurrentClass, 30000); // update every 30s
+  buildDayTabs();
+  renderAssignments();
+  renderGrades();
+}
+
+// Check if API key already saved
+window.addEventListener('load', () => {
+  const key = getApiKey();
+  if (key) {
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  }
+});
+</script>
+</body>
+</html>
