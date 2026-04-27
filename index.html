@@ -9,1327 +9,1670 @@
 <title>EvanAI</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#fff;--surface:#f4f4f5;--surface2:#ececed;--border:#e4e4e7;
+  --text:#09090b;--muted:#71717a;--muted2:#a1a1aa;--accent:#18181b;
+  --blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--red:#dc2626;
+  --green-bg:#dcfce7;--yellow-bg:#fef9c3;--red-bg:#fee2e2;--blue-bg:#dbeafe;
+  --nav-h:68px;
+}
+html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
 
-:root {
-  --bg: #ffffff;
-  --surface: #f4f4f5;
-  --surface2: #ececed;
-  --border: #e4e4e7;
-  --text: #09090b;
-  --muted: #71717a;
-  --muted2: #a1a1aa;
-  --accent: #18181b;
-  --blue: #2563eb;
-  --green: #16a34a;
-  --yellow: #ca8a04;
-  --red: #dc2626;
-  --green-bg: #dcfce7;
-  --yellow-bg: #fef9c3;
-  --red-bg: #fee2e2;
-  --blue-bg: #dbeafe;
-  --nav-h: 72px;
+/* ── MOBILE ── */
+body{overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;max-width:430px;margin:0 auto;position:relative;overflow:hidden}
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 18px calc(var(--nav-h) + 12px);-webkit-overflow-scrolling:touch}
+.screen.active{display:block}
+.screen::-webkit-scrollbar{display:none}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nav-h);background:rgba(255,255,255,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;z-index:100}
+.nav-tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:500;color:var(--muted2);min-width:44px;cursor:pointer;transition:color .15s}
+.nav-tab.active{color:var(--blue)}
+.nav-icon{font-size:20px;line-height:1}
+
+/* ── DESKTOP (768px+) ── */
+@media(min-width:768px){
+  body{overflow:auto;background:#f0f0f0}
+  #app{max-width:100%;height:100vh;flex-direction:row;margin:0;border-radius:0;overflow:hidden}
+
+  /* SIDEBAR replaces bottom nav */
+  .bottom-nav{
+    position:relative;bottom:auto;left:auto;transform:none;
+    width:220px;min-width:220px;height:100%;
+    flex-direction:column;justify-content:flex-start;align-items:stretch;
+    padding:0;border-top:none;border-right:1px solid var(--border);
+    background:var(--bg);overflow:hidden;flex-shrink:0;
+  }
+  .nav-tab{
+    flex-direction:row;gap:12px;padding:14px 20px;
+    font-size:13px;min-width:unset;border-radius:0;
+    border-left:3px solid transparent;
+    justify-content:flex-start;
+  }
+  .nav-tab.active{color:var(--blue);background:#eff6ff;border-left-color:var(--blue)}
+  .nav-icon{font-size:18px}
+
+  /* Sidebar header */
+  .bottom-nav::before{
+    content:'EvanAI';
+    display:block;
+    font-size:20px;font-weight:800;letter-spacing:-.5px;
+    padding:24px 20px 20px;
+    border-bottom:1px solid var(--border);
+    color:var(--text);
+  }
+
+  /* SCREENS become main content area */
+  #screen-home,#screen-work,#screen-sched,#screen-cal,#screen-grades,#screen-ai{
+    padding:0 32px 32px;max-width:900px;width:100%;margin:0 auto;
+  }
+  .screen{padding-bottom:32px}
+  #screen-ai{max-width:700px}
+
+  /* TOP BAR sticks to top of content */
+  .top-bar{padding:24px 0 14px}
+  .page-title{font-size:30px}
+
+  /* STATS GRID wider */
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .gpa-grid{grid-template-columns:repeat(3,1fr)}
+
+  /* PANELS become modal-style on desktop */
+  .panel{
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.95);
+    width:560px;max-width:90vw;height:80vh;max-height:700px;
+    border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.15),0 0 0 1px var(--border);
+    opacity:0;pointer-events:none;
+    transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .25s;
+  }
+  .panel.open{
+    transform:translate(-50%,-50%) scale(1);
+    opacity:1;pointer-events:all;
+  }
+
+  /* SHEETS stay at bottom on desktop too but centered */
+  .bottom-sheet{max-width:560px;border-radius:20px 20px 0 0}
+
+  /* AI screen layout */
+  #screen-ai{display:flex;flex-direction:column;height:100%}
+  .chat-messages{max-height:calc(100vh - 280px)}
+
+  /* Calendar wider */
+  .cal-grid{gap:4px}
+  .cal-day{font-size:14px}
+
+  /* Schedule grid */
+  #sched-list .sched-row{padding:12px 0}
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-  font-family: 'Inter', -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
+@media(min-width:1100px){
+  #screen-home,#screen-work,#screen-sched,#screen-cal,#screen-grades{max-width:1000px}
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
 }
 
-/* ── LAYOUT ── */
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: -webkit-fill-available;
-  max-width: 430px;
-  margin: 0 auto;
-  position: relative;
-  overflow: hidden;
-}
+/* TOP BAR */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(16px);z-index:10}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.add-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;font-size:20px;font-weight:300;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;transition:opacity .15s}
+.add-btn:active{opacity:.7}
 
-.screen {
-  display: none;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0 18px calc(var(--nav-h) + 16px);
-  -webkit-overflow-scrolling: touch;
-}
+/* CARDS */
+.card{background:var(--surface);border-radius:16px;padding:16px;margin-bottom:10px}
+.card-w{background:white;border:1px solid var(--border);border-radius:16px;padding:2px 16px;margin-bottom:10px}
+.dark-card{background:var(--accent);color:white;border-radius:20px;padding:20px;margin-bottom:12px}
 
-.screen.active { display: block; }
-.screen::-webkit-scrollbar { display: none; }
+/* ROW */
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 430px;
-  height: var(--nav-h);
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding-top: 10px;
-  z-index: 100;
-}
+/* SECTION TITLE */
+.sec-t{font-size:15px;font-weight:600;margin:16px 0 8px;color:var(--text)}
 
-.nav-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--muted2);
-  min-width: 56px;
-  cursor: pointer;
-  padding: 2px 0;
-  transition: color 0.15s;
-}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;cursor:pointer;border:none}
+.pill-ns{background:var(--surface);color:var(--muted)}
+.pill-ip{background:var(--yellow-bg);color:var(--yellow)}
+.pill-dn{background:var(--green-bg);color:var(--green)}
+.pill-ms{background:var(--red-bg);color:var(--red)}
 
-.nav-tab.active { color: var(--blue); }
-.nav-icon { font-size: 24px; line-height: 1; }
+/* CHIPS */
+.chip-scroll{display:flex;gap:7px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px}
+.chip-scroll::-webkit-scrollbar{display:none}
+.chip{padding:7px 14px;border-radius:22px;font-size:12px;font-weight:500;background:var(--surface);color:var(--muted);white-space:nowrap;border:none;cursor:pointer;font-family:'Inter',sans-serif}
+.chip.active{background:var(--accent);color:white}
 
-/* ── TOP BAR ── */
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0 12px;
-  position: sticky;
-  top: 0;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(16px);
-  z-index: 10;
-}
+/* HOME */
+.live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.prog-bar{height:3px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;margin:10px 0 6px}
+.prog-fill{height:100%;background:rgba(255,255,255,.65);border-radius:2px}
+.next-card{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surface);border-radius:14px;margin-bottom:16px;cursor:pointer}
+.next-arrow{width:32px;height:32px;background:white;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--muted)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.stat-block{background:var(--surface);border-radius:16px;padding:16px}
+.stat-num{font-size:28px;font-weight:700;letter-spacing:-1px}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.due-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer}
+.due-row+.due-row{border-top:1px solid var(--border)}
+.classroom-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px;margin-bottom:12px}
 
-.page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+/* ASSIGNMENTS */
+.todo-item{display:flex;align-items:center;gap:12px;padding:12px 0}
+.todo-item+.todo-item{border-top:1px solid var(--border)}
+.bullet-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;margin:0 4px}
+.asgn-card{background:var(--surface);border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer}
+.asgn-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:9px}
+.asgn-bot{display:flex;justify-content:space-between;align-items:center}
+.class-tag{font-size:10px;font-weight:600;color:var(--blue);background:var(--blue-bg);padding:3px 9px;border-radius:6px}
+.mini-btn{font-size:11px;font-weight:500;background:white;border:1px solid var(--border);padding:4px 10px;border-radius:8px;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif}
 
-.add-btn {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: white;
-  font-size: 22px;
-  font-weight: 300;
-  display: flex; align-items: center; justify-content: center;
-  border: none; cursor: pointer;
-  transition: opacity 0.15s;
-}
+/* SCHEDULE */
+.day-scroll{display:flex;gap:7px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}
+.day-scroll::-webkit-scrollbar{display:none}
+.day-chip{display:flex;flex-direction:column;align-items:center;padding:8px 12px;border-radius:12px;background:var(--surface);font-size:10px;font-weight:500;color:var(--muted);gap:2px;cursor:pointer;flex-shrink:0;border:none;font-family:'Inter',sans-serif}
+.day-chip .day-num{font-size:16px;font-weight:700;color:var(--text)}
+.day-chip.active{background:var(--accent);color:rgba(255,255,255,.7)}
+.day-chip.active .day-num{color:white}
+.sched-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.sched-row:last-child{border-bottom:none}
+.sched-time{font-size:10px;color:var(--muted);width:76px;flex-shrink:0;line-height:1.4}
+.now-badge{font-size:9px;font-weight:700;background:#4ade80;color:white;padding:2px 7px;border-radius:5px;flex-shrink:0}
 
-.add-btn:active { opacity: 0.7; }
+/* CALENDAR */
+.month-nav{display:flex;align-items:center;justify-content:space-between;padding:2px 0 10px}
+.month-name-big{font-size:18px;font-weight:600}
+.month-btn{font-size:18px;color:var(--muted);cursor:pointer;padding:4px 8px;border:none;background:none}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.cal-day-label{text-align:center;font-size:10px;color:var(--muted);font-weight:500;padding:3px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{text-align:center;font-size:12px;cursor:pointer;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;position:relative;flex-direction:column;color:var(--text)}
+.cal-day.today{background:var(--blue);color:white}
+.cal-day.selected{background:var(--surface);color:var(--text)}
+.cal-day.other-month{color:var(--muted2);opacity:.4}
+.cal-day .ev-dot-cal{position:absolute;bottom:1px;width:4px;height:4px;border-radius:50%;background:var(--blue)}
+.cal-day.today .ev-dot-cal{background:white}
+.event-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.event-item:last-child{border-bottom:none}
+.ev-color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
-/* ── CARDS ── */
-.card { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 10px; }
-.card-white { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 2px 16px; margin-bottom: 10px; }
-.dark-card { background: var(--accent); color: white; border-radius: 20px; padding: 20px; margin-bottom: 12px; }
+/* GRADES */
+.gpa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.gpa-block{background:var(--accent);color:white;border-radius:16px;padding:16px;text-align:center}
+.gpa-label{font-size:10px;font-weight:500;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.gpa-val{font-size:32px;font-weight:700;letter-spacing:-1px}
+.grade-bubble{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.gA{background:var(--green-bg);color:var(--green)}
+.gB{background:var(--blue-bg);color:var(--blue)}
+.gC{background:var(--yellow-bg);color:var(--yellow)}
 
-.section-title { font-size: 16px; font-weight: 700; margin: 18px 0 10px; }
+/* AI */
+.chat-messages{display:flex;flex-direction:column;gap:12px;padding:14px 0;flex:1}
+.msg-ai{background:var(--surface);border-radius:18px 18px 18px 4px;padding:12px 14px;font-size:13px;line-height:1.6;max-width:88%;align-self:flex-start}
+.msg-user{background:var(--accent);color:white;border-radius:18px 18px 4px 18px;padding:12px 14px;font-size:13px;line-height:1.6;max-width:88%;align-self:flex-end}
+.ai-sender{font-size:10px;font-weight:600;color:var(--blue);margin-bottom:4px}
+.ai-input-wrap{display:flex;gap:8px;padding:10px 0 0;border-top:1px solid var(--border)}
+.ai-input{flex:1;background:var(--surface);border:none;border-radius:22px;padding:10px 16px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none}
+.send-btn{width:38px;height:38px;border-radius:50%;background:var(--accent);color:white;font-size:16px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0}
 
-/* ── PILLS ── */
-.pill {
-  display: inline-flex; align-items: center; gap: 2px;
-  padding: 4px 10px; border-radius: 20px;
-  font-size: 10px; font-weight: 600;
-  white-space: nowrap; cursor: pointer;
-  border: none; outline: none;
-}
-.pill.ns { background: var(--surface); color: var(--muted); }
-.pill.ip { background: var(--yellow-bg); color: var(--yellow); }
-.pill.dn { background: var(--green-bg); color: var(--green); }
-.pill.ms { background: var(--red-bg); color: var(--red); }
+/* PANELS */
+.panel{position:fixed;top:0;left:50%;transform:translateX(-50%) translateX(100%);width:100%;max-width:430px;height:100%;background:white;z-index:200;display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.panel.open{transform:translateX(-50%) translateX(0)}
+.panel-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 18px 100px}
+.panel-scroll::-webkit-scrollbar{display:none}
+.panel-back{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px}
+.back-link{font-size:14px;color:var(--blue);font-weight:500;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
+.panel-action{font-size:12px;color:var(--blue);cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
+.hero-panel{background:var(--accent);color:white;border-radius:18px;padding:20px;margin-bottom:16px}
+.hero-class-name{font-size:20px;font-weight:700;margin-bottom:2px}
+.hero-teacher{font-size:12px;opacity:.5;margin-bottom:16px}
+.hero-avg-row{display:flex;align-items:flex-end;justify-content:space-between}
+.hero-avg{font-size:50px;font-weight:700;letter-spacing:-2px;line-height:1}
+.hero-letter{font-size:30px;font-weight:700;background:rgba(255,255,255,.12);border-radius:12px;width:58px;height:58px;display:flex;align-items:center;justify-content:center}
 
-/* ── DIVIDER ── */
-.divider { height: 1px; background: var(--border); }
+/* SHEETS */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-backdrop.open{opacity:1;pointer-events:all}
+.bottom-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;background:white;border-radius:22px 22px 0 0;padding:18px 18px 36px;z-index:301;transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto}
+.bottom-sheet::-webkit-scrollbar{display:none}
+.bottom-sheet.open{transform:translateX(-50%) translateY(0)}
+.sheet-handle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:16px}
+.field-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.field-input{width:100%;background:var(--surface);border:none;border-radius:11px;padding:12px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;margin-bottom:14px}
+.field-textarea{width:100%;background:var(--surface);border:none;border-radius:11px;padding:12px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;margin-bottom:14px;resize:none;min-height:80px}
+.status-row{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.status-chip{padding:8px 12px;border-radius:10px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border:2px solid transparent;font-family:'Inter',sans-serif;transition:all .15s}
+.status-chip.on{border-color:var(--accent);background:var(--accent);color:white}
+.sheet-btn{width:100%;padding:14px;border-radius:13px;background:var(--accent);color:white;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:8px}
+.sheet-del{width:100%;padding:14px;border-radius:13px;background:var(--red-bg);color:var(--red);font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:8px}
+.sheet-cancel{width:100%;padding:12px;border-radius:13px;background:var(--surface);color:var(--muted);font-size:14px;border:none;cursor:pointer;font-family:'Inter',sans-serif}
 
-/* ═══════════════════════════════
-   HOME
-═══════════════════════════════ */
-.greeting-wrap { padding: 8px 0 16px; }
-.greeting-sub { font-size: 14px; color: var(--muted); font-weight: 500; }
-.greeting-name { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+/* MINI CAL IN SHEET */
+.mini-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mini-month-name{font-size:13px;font-weight:600}
+.mini-month-btn{font-size:16px;color:var(--muted);cursor:pointer;padding:2px 8px;border:none;background:none}
+.mini-cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px}
+.mini-cal-label{text-align:center;font-size:9px;color:var(--muted);padding:2px 0}
+.mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:14px}
+.mini-day{text-align:center;font-size:11px;cursor:pointer;padding:5px 2px;border-radius:50%;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.mini-day.today{background:var(--blue);color:white}
+.mini-day.selected-d{background:var(--surface);font-weight:600}
+.mini-day.other-m{opacity:.3}
 
-.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+/* TIME PICKER */
+.time-picker{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.time-col{display:flex;flex-direction:column;gap:3px;max-height:130px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 2px}
+.time-col::-webkit-scrollbar{display:none}
+.time-item{padding:7px 14px;border-radius:8px;font-size:14px;color:var(--muted);cursor:pointer;text-align:center;min-width:44px;white-space:nowrap}
+.time-item.on{background:var(--accent);color:white;font-weight:500}
+.time-sep{font-size:18px;color:var(--text);padding-top:4px;align-self:flex-start;padding-top:10px}
 
-.now-label { font-size: 11px; font-weight: 600; opacity: .55; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; color: white; display: flex; align-items: center; }
-.now-class { font-size: 22px; font-weight: 800; color: white; letter-spacing: -.3px; margin-bottom: 3px; }
-.now-teacher { font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 14px; }
-.prog-bar { height: 4px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
-.prog-fill { height: 100%; background: rgba(255,255,255,.65); border-radius: 3px; transition: width 1s; }
-.now-time { font-size: 11px; color: rgba(255,255,255,.45); }
+/* GRADE ENTRY ROW */
+.grade-entry{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.grade-entry:last-child{border-bottom:none}
+.grade-entry:active{opacity:.7}
 
-.next-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface); border-radius: 14px; margin-bottom: 20px; }
-.next-arrow { width: 34px; height: 34px; background: white; border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--muted); }
-.next-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 2px; }
-.next-class { font-size: 14px; font-weight: 700; }
-.next-time { font-size: 11px; color: var(--muted); margin-top: 1px; }
+/* CAT BAR */
+.cat-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cat-bar-name{font-size:12px;font-weight:500;width:78px;flex-shrink:0}
+.cat-bar-pct{font-size:11px;color:var(--muted);width:28px;flex-shrink:0}
+.cat-bar-track{flex:1;height:5px;background:var(--surface);border-radius:3px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:3px}
+.cat-bar-score{font-size:12px;font-weight:600;margin-left:8px;width:26px;text-align:right;flex-shrink:0}
 
-.stats-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-.stat-block { background: var(--surface); border-radius: 16px; padding: 16px 14px; }
-.stat-num { font-size: 30px; font-weight: 800; letter-spacing: -1px; }
-.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
-.stat-warn { font-size: 11px; color: var(--yellow); font-weight: 600; margin-top: 2px; }
-
-.due-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; }
-.due-row + .due-row { border-top: 1px solid var(--border); }
-.due-name { font-size: 13px; font-weight: 600; }
-.due-class-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.due-red { font-size: 11px; font-weight: 700; color: var(--red); }
-.due-yellow { font-size: 11px; font-weight: 700; color: var(--yellow); }
-.due-green { font-size: 11px; font-weight: 700; color: var(--green); }
-
-/* ═══════════════════════════════
-   ASSIGNMENTS
-═══════════════════════════════ */
-.filter-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 18px; }
-.filter-scroll::-webkit-scrollbar { display: none; }
-.fchip { padding: 8px 16px; border-radius: 22px; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--muted); white-space: nowrap; border: none; cursor: pointer; flex-shrink: 0; font-family: 'Inter', sans-serif; }
-.fchip.on { background: var(--accent); color: white; }
-
-.todo-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; }
-.todo-row + .todo-row { border-top: 1px solid var(--border); }
-.circle-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
-.circle-check.checked { background: var(--green); border-color: var(--green); color: white; font-size: 12px; }
-.todo-label { flex: 1; font-size: 13px; font-weight: 500; }
-.todo-label.done-text { text-decoration: line-through; color: var(--muted2); }
-
-.asgn-card { background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 9px; }
-.asgn-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
-.asgn-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-.asgn-due { font-size: 11px; color: var(--muted); }
-.asgn-bottom { display: flex; justify-content: space-between; align-items: center; }
-.class-badge { font-size: 11px; font-weight: 600; color: var(--blue); background: var(--blue-bg); padding: 4px 10px; border-radius: 8px; }
-.ai-mini-btn { font-size: 11px; font-weight: 600; color: var(--muted); background: white; border: 1px solid var(--border); padding: 5px 12px; border-radius: 9px; cursor: pointer; font-family: 'Inter', sans-serif; }
-.ai-mini-btn:active { opacity: .7; }
-
-/* ═══════════════════════════════
-   SCHEDULE
-═══════════════════════════════ */
-.day-scroll { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 2px; }
-.day-scroll::-webkit-scrollbar { display: none; }
-.day-chip { display: flex; flex-direction: column; align-items: center; padding: 9px 14px; border-radius: 14px; background: var(--surface); font-size: 10px; font-weight: 600; color: var(--muted); gap: 2px; cursor: pointer; flex-shrink: 0; transition: all .15s; border: none; font-family: 'Inter', sans-serif; }
-.day-chip .dn { font-size: 18px; font-weight: 800; color: var(--text); }
-.day-chip.on { background: var(--accent); color: rgba(255,255,255,.7); }
-.day-chip.on .dn { color: white; }
-
-.srow { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
-.srow + .srow { border-top: 1px solid var(--border); }
-.stime { font-size: 10px; color: var(--muted); width: 78px; flex-shrink: 0; line-height: 1.5; }
-.sinfo { flex: 1; }
-.sclass { font-size: 13px; font-weight: 600; }
-.steacher { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.now-badge { font-size: 9px; font-weight: 800; background: #4ade80; color: white; padding: 3px 8px; border-radius: 6px; letter-spacing: .06em; flex-shrink: 0; }
-
-/* ═══════════════════════════════
-   GRADES
-═══════════════════════════════ */
-.gpa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-.gpa-blk { background: var(--accent); color: white; border-radius: 18px; padding: 18px 16px; text-align: center; }
-.gpa-lbl { font-size: 10px; font-weight: 600; opacity: .55; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
-.gpa-val { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; }
-.gpa-sub { font-size: 10px; opacity: .45; margin-top: 2px; }
-
-.grade-row { display: flex; align-items: center; gap: 13px; padding: 13px 0; cursor: pointer; }
-.grade-row + .grade-row { border-top: 1px solid var(--border); }
-.grade-row:active { opacity: .7; }
-.grade-bubble { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
-.grade-bubble.A { background: var(--green-bg); color: var(--green); }
-.grade-bubble.B { background: var(--blue-bg); color: var(--blue); }
-.grade-bubble.C { background: var(--yellow-bg); color: var(--yellow); }
-.grade-bubble.D { background: var(--red-bg); color: var(--red); }
-.grade-info-col { flex: 1; }
-.grade-cn { font-size: 13px; font-weight: 600; }
-.grade-tn { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.grade-right-col { text-align: right; display: flex; align-items: center; gap: 6px; }
-.grade-pct { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
-.chevron { color: var(--muted2); font-size: 16px; }
-
-/* ═══════════════════════════════
-   GRADE DETAIL (slide-in panel)
-═══════════════════════════════ */
-.detail-panel {
-  position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateX(100%);
-  width: 100%; max-width: 430px; height: 100%; background: white;
-  z-index: 200; display: flex; flex-direction: column;
-  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-}
-.detail-panel.open { transform: translateX(-50%) translateX(0); }
-
-.detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 90px; }
-.detail-scroll::-webkit-scrollbar { display: none; }
-
-.back-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
-.back-btn { font-size: 15px; color: var(--blue); font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif; }
-
-.detail-hero { background: var(--accent); color: white; padding: 22px 20px 24px; }
-.detail-class { font-size: 22px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 3px; }
-.detail-teacher { font-size: 13px; opacity: .55; margin-bottom: 20px; }
-.detail-avg-row { display: flex; align-items: flex-end; justify-content: space-between; }
-.detail-avg-num { font-size: 56px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-.detail-avg-lbl { font-size: 11px; opacity: .5; font-weight: 500; margin-bottom: 6px; }
-.detail-letter { font-size: 36px; font-weight: 800; background: rgba(255,255,255,.12); border-radius: 14px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
-
-.weight-section { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
-.weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.weight-name { font-size: 12px; font-weight: 600; width: 80px; flex-shrink: 0; }
-.weight-pct { font-size: 11px; color: var(--muted); width: 30px; flex-shrink: 0; }
-.bar-track { flex: 1; height: 6px; background: var(--surface); border-radius: 4px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 4px; }
-.weight-score { font-size: 13px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
-
-.entries-section { padding: 16px 18px; }
-.cat-block { margin-bottom: 20px; }
-.cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.cat-lbl { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.cat-dot { width: 7px; height: 7px; border-radius: 50%; }
-.cat-avg-text { font-size: 13px; font-weight: 700; }
-
-.entry-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--surface); border-radius: 12px; margin-bottom: 6px; }
-.entry-name { font-size: 13px; font-weight: 500; }
-.entry-date { font-size: 10px; color: var(--muted); margin-top: 1px; }
-.entry-score { font-size: 16px; font-weight: 800; letter-spacing: -.5px; }
-
-.edit-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: white; border-top: 1px solid var(--border); padding: 14px 18px 30px; z-index: 201; }
-.edit-bar-btn { width: 100%; padding: 15px; border-radius: 14px; background: var(--accent); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
-
-/* ADD GRADE SHEET */
-.sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s; }
-.sheet-backdrop.open { opacity: 1; pointer-events: all; }
-.bottom-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; background: white; border-radius: 24px 24px 0 0; padding: 20px 20px 40px; z-index: 301; transition: transform .3s cubic-bezier(.4,0,.2,1); }
-.bottom-sheet.open { transform: translateX(-50%) translateY(0); }
-.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
-.sheet-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
-.field-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
-.field-input { width: 100%; background: var(--surface); border: none; border-radius: 12px; padding: 13px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); margin-bottom: 14px; outline: none; }
-.cat-select-row { display: flex; gap: 8px; margin-bottom: 18px; }
-.cat-chip { flex: 1; padding: 10px 6px; border-radius: 12px; background: var(--surface); font-size: 12px; font-weight: 600; text-align: center; color: var(--muted); cursor: pointer; border: 2px solid transparent; font-family: 'Inter', sans-serif; transition: all .15s; }
-.cat-chip.on { border-color: var(--accent); background: var(--accent); color: white; }
-.save-btn { width: 100%; padding: 15px; border-radius: 14px; background: var(--accent); color: white; font-size: 15px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
-
-/* ═══════════════════════════════
-   AI
-═══════════════════════════════ */
-#screen-ai { padding: 0; display: none; flex-direction: column; height: calc(100vh - var(--nav-h)); }
-#screen-ai.active { display: flex; }
-
-.ai-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.ai-h { font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
-.ai-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-.preset-row { display: flex; gap: 8px; padding: 12px 18px; overflow-x: auto; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.preset-row::-webkit-scrollbar { display: none; }
-.pchip { padding: 8px 14px; border-radius: 22px; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--text); white-space: nowrap; border: none; cursor: pointer; flex-shrink: 0; font-family: 'Inter', sans-serif; transition: all .15s; }
-.pchip:active { background: var(--accent); color: white; }
-
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-.chat-messages::-webkit-scrollbar { display: none; }
-
-.bubble-ai { background: var(--surface); border-radius: 18px 18px 18px 4px; padding: 12px 14px; font-size: 13px; line-height: 1.6; max-width: 86%; align-self: flex-start; }
-.bubble-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; padding: 12px 14px; font-size: 13px; line-height: 1.6; max-width: 86%; align-self: flex-end; }
-.ai-from { font-size: 10px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
-
-.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 14px; }
-.typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted2); animation: typing 1.2s infinite; }
-.typing-dot:nth-child(2) { animation-delay: .2s; }
-.typing-dot:nth-child(3) { animation-delay: .4s; }
-@keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
-
-.chat-input-row { display: flex; gap: 9px; padding: 12px 18px 16px; border-top: 1px solid var(--border); flex-shrink: 0; background: white; }
-.chat-box { flex: 1; background: var(--surface); border: none; border-radius: 22px; padding: 10px 16px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; color: var(--text); resize: none; max-height: 100px; }
-.send-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; cursor: pointer; transition: opacity .15s; }
-.send-circle:disabled { opacity: .4; }
-
-/* ── MODALS ── */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 400; display: none; align-items: flex-end; }
-.modal-backdrop.open { display: flex; }
-.modal { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; }
-.modal-title { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
-.modal-row { display: flex; gap: 10px; margin-bottom: 12px; }
-.modal-input { flex: 1; background: var(--surface); border: none; border-radius: 12px; padding: 13px 14px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); outline: none; }
-.modal-btn { padding: 13px 20px; border-radius: 12px; background: var(--accent); color: white; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
-.modal-cancel { width: 100%; padding: 13px; border-radius: 12px; background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; border: none; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px; }
-
-/* ── SETUP SCREEN ── */
-#setup-screen { position: fixed; inset: 0; background: white; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
-#setup-screen h1 { font-size: 32px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
-#setup-screen p { font-size: 14px; color: var(--muted); margin-bottom: 32px; text-align: center; line-height: 1.5; }
-.setup-input { width: 100%; background: var(--surface); border: none; border-radius: 14px; padding: 16px; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--text); outline: none; margin-bottom: 12px; }
-.setup-btn { width: 100%; padding: 16px; border-radius: 14px; background: var(--accent); color: white; font-size: 16px; font-weight: 700; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
-.setup-note { font-size: 11px; color: var(--muted2); text-align: center; margin-top: 12px; line-height: 1.5; }
+/* WHAT DO I NEED */
+.win-calc{background:var(--blue-bg);border-radius:12px;padding:14px;margin-top:4px}
+.win-result{font-size:22px;font-weight:700;color:var(--blue)}
 </style>
 </head>
 <body>
+<div id="app">
 
-<!-- SETUP SCREEN -->
-<div id="setup-screen">
-  <div style="font-size:48px; margin-bottom:16px;">🤖</div>
-  <h1>EvanAI</h1>
-  <p>Your personal AI dashboard.<br>Enter your Anthropic API key to get started.</p>
-  <input class="setup-input" id="api-key-input" type="password" placeholder="sk-ant-..." />
-  <button class="setup-btn" onclick="saveApiKey()">Let's Go →</button>
-  <p class="setup-note">Your key is saved only on this device.<br>Never shared with anyone.</p>
-</div>
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div style="padding:10px 0 12px">
+    <div style="font-size:13px;color:var(--muted)" id="time-greeting">Good morning,</div>
+    <div style="font-size:28px;font-weight:700;letter-spacing:-.5px">Evan 👋</div>
+  </div>
 
-<!-- MAIN APP -->
-<div id="app" style="display:none;">
-
-  <!-- HOME -->
-  <div id="screen-home" class="screen active">
-    <div class="greeting-wrap">
-      <div class="greeting-sub">Good <span id="time-of-day">morning</span>,</div>
-      <div class="greeting-name">Evan 👋</div>
-    </div>
-
-    <!-- Current class -->
-    <div class="dark-card" id="current-class-card">
-      <div class="now-label"><span class="live-dot"></span> Currently In</div>
-      <div class="now-class" id="home-current-class">—</div>
-      <div class="now-teacher" id="home-current-teacher">No class right now</div>
-      <div class="prog-bar"><div class="prog-fill" id="home-prog" style="width:0%"></div></div>
-      <div class="now-time" id="home-current-time"></div>
-    </div>
-
-    <!-- Next up -->
-    <div class="next-row">
-      <div class="next-arrow">→</div>
-      <div>
-        <div class="next-label">Next Up</div>
-        <div class="next-class" id="home-next-class">—</div>
-        <div class="next-time" id="home-next-time"></div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-2col">
-      <div class="stat-block">
-        <div class="stat-num" id="home-gpa">—</div>
-        <div class="stat-label">Current GPA</div>
-      </div>
-      <div class="stat-block" id="home-next-test-block">
-        <div class="stat-num" style="font-size:17px; margin-top:2px;" id="home-test-name">No tests</div>
-        <div class="stat-label" id="home-test-days"></div>
-      </div>
-    </div>
-
-    <!-- Due soon -->
-    <div class="section-title">Due Soon</div>
-    <div class="card-white" id="home-due-list">
-      <div class="due-row" style="justify-content:center; padding:16px 0;">
-        <span style="color:var(--muted); font-size:13px;">No assignments yet</span>
-      </div>
+  <div class="classroom-banner" id="classroom-banner">
+    <div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:3px">New assignment detected</div>
+    <div style="font-size:11px;color:#3b82f6;margin-bottom:10px" id="classroom-text">Ms. Cohen assigned "Reflection 22: Act I + Movie adaptation" — due tomorrow</div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;padding:9px;border-radius:8px;background:#2563eb;color:white;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif" onclick="addClassroomAssignment()">Add to Work</button>
+      <button style="flex:1;padding:9px;border-radius:8px;background:#e0eaff;color:#3b82f6;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif" onclick="dismissClassroom()">Dismiss</button>
     </div>
   </div>
 
-  <!-- ASSIGNMENTS -->
-  <div id="screen-work" class="screen">
-    <div class="top-bar">
-      <div class="page-title">Assignments</div>
-      <button class="add-btn" onclick="openAddAssignment()">+</button>
-    </div>
-
-    <div class="filter-scroll">
-      <button class="fchip on" onclick="filterAssign(this,'all')">All</button>
-      <button class="fchip" onclick="filterAssign(this,'ns')">Not Started</button>
-      <button class="fchip" onclick="filterAssign(this,'ip')">In Progress</button>
-      <button class="fchip" onclick="filterAssign(this,'dn')">Done</button>
-      <button class="fchip" onclick="filterAssign(this,'ms')">Missing</button>
-    </div>
-
-    <div class="section-title">To-Do</div>
-    <div class="card-white" id="todo-list">
-      <div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No assignments yet — tap + to add</div>
-    </div>
-
-    <div class="section-title">Details</div>
-    <div id="assign-details"></div>
+  <div class="dark-card" onclick="switchTab('cal')" style="cursor:pointer">
+    <div style="font-size:10px;font-weight:500;opacity:.5;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;display:flex;align-items:center"><span class="live-dot"></span>Currently In</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:2px" id="home-current-class">—</div>
+    <div style="font-size:12px;opacity:.55;margin-bottom:12px" id="home-current-teacher">No class right now</div>
+    <div class="prog-bar"><div class="prog-fill" id="home-prog" style="width:0%"></div></div>
+    <div style="font-size:10px;opacity:.4" id="home-current-time">Tap to open calendar</div>
   </div>
 
-  <!-- SCHEDULE -->
-  <div id="screen-schedule" class="screen">
-    <div class="top-bar">
-      <div class="page-title">Schedule</div>
-    </div>
-
-    <div class="dark-card">
-      <div class="now-label"><span class="live-dot"></span> Currently In</div>
-      <div class="now-class" id="sched-current-class">—</div>
-      <div class="now-teacher" id="sched-current-teacher">No class right now</div>
-      <div class="prog-bar"><div class="prog-fill" id="sched-prog" style="width:0%"></div></div>
-      <div class="now-time" id="sched-next-text"></div>
-    </div>
-
-    <div class="day-scroll" id="day-tabs"></div>
-    <div class="card-white" id="schedule-list"></div>
-  </div>
-
-  <!-- GRADES -->
-  <div id="screen-grades" class="screen">
-    <div class="top-bar">
-      <div class="page-title">Grades</div>
-      <button class="add-btn" onclick="openAddClass()">+</button>
-    </div>
-
-    <div class="gpa-grid">
-      <div class="gpa-blk">
-        <div class="gpa-lbl">GPA</div>
-        <div class="gpa-val" id="overall-gpa">—</div>
-        <div class="gpa-sub">Weighted</div>
-      </div>
-      <div class="gpa-blk">
-        <div class="gpa-lbl">Average</div>
-        <div class="gpa-val" id="overall-avg">—</div>
-        <div class="gpa-sub">All classes</div>
-      </div>
-    </div>
-
-    <div class="card-white" id="grades-list">
-      <div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No classes yet — tap + to add</div>
+  <div class="next-card" onclick="switchTab('cal')">
+    <div class="next-arrow">→</div>
+    <div>
+      <div style="font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Next Up</div>
+      <div style="font-size:14px;font-weight:600" id="home-next-class">—</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:1px" id="home-next-time"></div>
     </div>
   </div>
 
-  <!-- AI -->
-  <div id="screen-ai" class="screen">
-    <div class="ai-header">
-      <div class="ai-h">AI Assistant 🤖</div>
-      <div class="ai-sub">Claude · knows your full context</div>
+  <div class="stats-grid">
+    <div class="stat-block" onclick="switchTab('grades')" style="cursor:pointer">
+      <div class="stat-num" id="home-avg">—</div>
+      <div class="stat-lbl">Overall Average</div>
     </div>
-    <div class="preset-row">
-      <button class="pchip" onclick="preset('Explain a concept I\'m struggling with in school')">📖 Explain concept</button>
-      <button class="pchip" onclick="preset('Help me draft a respectful email to a teacher')">✉️ Teacher email</button>
-      <button class="pchip" onclick="preset('Help me study for an upcoming test')">📝 Help me study</button>
-      <button class="pchip" onclick="preset('Help me calculate what grade I need on my next assignment to reach my goal average')">📊 Grade calc</button>
-      <button class="pchip" onclick="preset('Help me with BackwardsNYC, my hoodie brand')">👕 BackwardsNYC</button>
-      <button class="pchip" onclick="preset('Help me with Vestis, my custom suit business')">👔 Vestis</button>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-      <div class="bubble-ai">
-        <div class="ai-from">EvanAI</div>
-        Hey Evan! I'm your personal AI — I know your schedule, your classes, your businesses, and your goals. What do you need?
-      </div>
-    </div>
-    <div class="chat-input-row">
-      <textarea class="chat-box" id="chat-input" placeholder="Ask anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="send-circle" id="send-btn" onclick="sendMessage()">↑</button>
+    <div class="stat-block" id="home-test-block">
+      <div style="font-size:16px;font-weight:600;margin-top:2px" id="home-test-name">No tests</div>
+      <div class="stat-lbl" id="home-test-days"></div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
-    <div class="nav-tab active" onclick="goTo('home',this)"><div class="nav-icon">🏠</div>Home</div>
-    <div class="nav-tab" onclick="goTo('work',this)"><div class="nav-icon">📚</div>Work</div>
-    <div class="nav-tab" onclick="goTo('schedule',this)"><div class="nav-icon">🗓️</div>Schedule</div>
-    <div class="nav-tab" onclick="goTo('grades',this)"><div class="nav-icon">📊</div>Grades</div>
-    <div class="nav-tab" onclick="goTo('ai',this)"><div class="nav-icon">🤖</div>AI</div>
+  <div class="sec-t">Due Soon</div>
+  <div class="card-w" id="home-due-list">
+    <div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No assignments yet</div>
   </div>
 </div>
+
+<!-- WORK -->
+<div id="screen-work" class="screen">
+  <div class="top-bar">
+    <div class="page-title">Assignments</div>
+    <button class="add-btn" onclick="openSheet('asgn-add')">+</button>
+  </div>
+  <div class="chip-scroll">
+    <button class="chip active" onclick="filterAssign(this,'all')">All</button>
+    <button class="chip" onclick="filterAssign(this,'ns')">Not Started</button>
+    <button class="chip" onclick="filterAssign(this,'ip')">In Progress</button>
+    <button class="chip" onclick="filterAssign(this,'dn')">Done</button>
+    <button class="chip" onclick="filterAssign(this,'ms')">Missing</button>
+  </div>
+  <div class="sec-t">To-Do</div>
+  <div class="card-w" id="todo-list"></div>
+  <div class="sec-t">Details</div>
+  <div id="assign-details"></div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="screen-sched" class="screen">
+  <div class="top-bar"><div class="page-title">Schedule</div></div>
+  <div class="dark-card" style="cursor:default">
+    <div style="font-size:10px;font-weight:500;opacity:.5;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;display:flex;align-items:center"><span class="live-dot"></span>Currently In</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:2px" id="sched-current">—</div>
+    <div style="font-size:12px;opacity:.55;margin-bottom:12px" id="sched-teacher">No class right now</div>
+    <div class="prog-bar"><div class="prog-fill" id="sched-prog" style="width:0%"></div></div>
+    <div style="font-size:10px;opacity:.4" id="sched-next-text"></div>
+  </div>
+  <div class="day-scroll" id="day-tabs"></div>
+  <div class="card-w" id="sched-list"></div>
+</div>
+
+<!-- CALENDAR -->
+<div id="screen-cal" class="screen">
+  <div class="top-bar">
+    <div class="page-title">Calendar</div>
+    <button class="add-btn" onclick="openSheet('event-add')">+</button>
+  </div>
+  <div class="month-nav">
+    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-name-big" id="cal-month-name">April 2026</div>
+    <button class="month-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="cal-header">
+    <div class="cal-day-label">S</div><div class="cal-day-label">M</div><div class="cal-day-label">T</div><div class="cal-day-label">W</div><div class="cal-day-label">T</div><div class="cal-day-label">F</div><div class="cal-day-label">S</div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="sec-t" id="cal-day-title">Sunday, April 26</div>
+  <div class="card-w" id="cal-events">
+    <div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">Nothing today · tap + to add</div>
+  </div>
+</div>
+
+<!-- GRADES -->
+<div id="screen-grades" class="screen">
+  <div class="top-bar">
+    <div class="page-title">Grades</div>
+    <button class="add-btn" onclick="openSheet('class-add')">+</button>
+  </div>
+  <div class="gpa-grid">
+    <div class="gpa-block">
+      <div class="gpa-label">Overall Avg</div>
+      <div class="gpa-val" id="overall-avg-display">—</div>
+    </div>
+    <div class="gpa-block">
+      <div class="gpa-label">GPA (4.33)</div>
+      <div class="gpa-val" id="overall-gpa-display">—</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-bottom:12px">
+    <button style="font-size:12px;font-weight:500;color:var(--blue);background:var(--blue-bg);border:none;padding:7px 16px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif" onclick="openSheet('veracross-sync')">Sync from Veracross screenshot →</button>
+  </div>
+  <div class="card-w" id="grades-list">
+    <div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No classes yet — tap + to add</div>
+  </div>
+</div>
+
+<!-- AI -->
+<div id="screen-ai" class="screen" style="display:flex;flex-direction:column;padding-bottom:80px">
+  <div style="padding:14px 0 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="font-size:22px;font-weight:700">AI Assistant 🤖</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">Claude · can do anything · knows everything about you</div>
+  </div>
+  <div class="chip-scroll" style="margin-top:10px;flex-shrink:0">
+    <button class="chip" onclick="aiPreset('Explain a concept')">Explain concept</button>
+    <button class="chip" onclick="aiPreset('Draft a teacher email')">Teacher email</button>
+    <button class="chip" onclick="aiPreset('Help me study for a test')">Help me study</button>
+    <button class="chip" onclick="aiPreset('Calculate my grade')">Grade calc</button>
+    <button class="chip" onclick="aiPreset('Help me with BackwardsNYC')">BackwardsNYC</button>
+    <button class="chip" onclick="aiPreset('Help me with Vestis')">Vestis</button>
+    <button class="chip" onclick="aiPreset('Sync my Veracross grades from screenshot')">Sync grades</button>
+    <button class="chip" onclick="aiPreset('What should I prioritize today?')">Prioritize</button>
+  </div>
+  <div class="chat-messages" id="chat-messages" style="overflow-y:auto;flex:1">
+    <div class="msg-ai">
+      <div class="ai-sender">EvanAI</div>
+      Hey Evan — I can do anything. School, grades, BackwardsNYC, Vestis, emails, study guides, grade calculations, schedule questions, or just life advice. What do you need?
+    </div>
+  </div>
+  <div class="ai-input-wrap" style="flex-shrink:0">
+    <textarea class="ai-input" id="ai-input" placeholder="Ask anything or paste a Veracross screenshot..." rows="1" onkeydown="handleEnter(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMessage()" id="send-btn">↑</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-tab active" data-screen="home" onclick="switchTab('home')"><div class="nav-icon">🏠</div>Home</div>
+  <div class="nav-tab" data-screen="work" onclick="switchTab('work')"><div class="nav-icon">📚</div>Work</div>
+  <div class="nav-tab" data-screen="sched" onclick="switchTab('sched')"><div class="nav-icon">🕐</div>Schedule</div>
+  <div class="nav-tab" data-screen="cal" onclick="switchTab('cal')"><div class="nav-icon">🗓️</div>Calendar</div>
+  <div class="nav-tab" data-screen="grades" onclick="switchTab('grades')"><div class="nav-icon">📊</div>Grades</div>
+  <div class="nav-tab" data-screen="ai" onclick="switchTab('ai')"><div class="nav-icon">🤖</div>AI</div>
+</div>
+
+</div><!-- end app -->
 
 <!-- GRADE DETAIL PANEL -->
-<div class="detail-panel" id="detail-panel">
-  <div class="detail-scroll" id="detail-scroll">
-    <div class="back-header">
-      <button class="back-btn" onclick="closeDetail()">← Grades</button>
+<div class="panel" id="panel-grade">
+  <div class="panel-scroll">
+    <div class="panel-back">
+      <button class="back-link" onclick="closePanel('panel-grade')">← Grades</button>
+      <button class="panel-action" onclick="openSheet('grade-system-edit')">Edit grade system</button>
     </div>
-    <div id="detail-content"></div>
-  </div>
-  <div class="edit-bar">
-    <button class="edit-bar-btn" onclick="openAddGrade()">+ Edit Grades</button>
+    <div class="hero-panel">
+      <div class="hero-class-name" id="pd-class">—</div>
+      <div class="hero-teacher" id="pd-teacher">—</div>
+      <div class="hero-avg-row">
+        <div>
+          <div style="font-size:11px;opacity:.5;margin-bottom:4px">Current Average</div>
+          <div class="hero-avg" id="pd-avg">—</div>
+        </div>
+        <div class="hero-letter" id="pd-letter">—</div>
+      </div>
+    </div>
+    <div class="sec-t">Category Breakdown</div>
+    <div class="card-w" id="pd-categories"></div>
+    <div style="margin-top:14px;background:var(--blue-bg);border-radius:12px;padding:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px">What do I need?</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Enter a target average to see what you need on your next assignment:</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="win-target" type="number" placeholder="Target avg e.g. 90" style="flex:1;background:white;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--text)" oninput="calcWhatINeed()">
+        <input id="win-weight" type="number" placeholder="Weight%" style="width:80px;background:white;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--text)" oninput="calcWhatINeed()">
+      </div>
+      <div id="win-result" style="font-size:13px;color:var(--blue);font-weight:600;margin-top:8px"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+      <div class="sec-t" style="margin:0">Individual Grades</div>
+      <button class="add-btn" style="width:28px;height:28px;font-size:16px" onclick="openSheet('grade-add')">+</button>
+    </div>
+    <div class="card-w" id="pd-grades">
+      <div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No grades added yet</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">Tap any grade to edit or delete</div>
   </div>
 </div>
 
-<!-- ADD GRADE SHEET -->
-<div class="sheet-backdrop" id="grade-sheet-backdrop" onclick="closeAddGrade()">
-  <div class="bottom-sheet" id="grade-sheet" onclick="event.stopPropagation()">
+<!-- ASSIGNMENT DETAIL PANEL -->
+<div class="panel" id="panel-asgn">
+  <div class="panel-scroll">
+    <div class="panel-back">
+      <button class="back-link" onclick="closePanel('panel-asgn')">← Assignments</button>
+      <button class="panel-action" onclick="openEditAssignment()">Edit assignment</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:22px;font-weight:700" id="pa-name">—</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px" id="pa-sub">—</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:18px">
+      <div class="class-tag" id="pa-class">—</div>
+      <span class="pill" id="pa-status">—</span>
+    </div>
+    <div class="sec-t">Notes</div>
+    <textarea class="field-textarea" id="pa-notes" style="min-height:140px" placeholder="Add notes, outline, key quotes, ideas...&#10;&#10;Tip: You can also ask the AI to help with this assignment"></textarea>
+    <button class="sheet-btn" onclick="saveAsgnNotes();closePanel('panel-asgn')">Save Notes</button>
+    <button style="width:100%;padding:12px;border-radius:12px;background:#eff6ff;color:var(--blue);font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif" onclick="askAIAbout()">Ask AI about this →</button>
+  </div>
+</div>
+
+<!-- ===================== SHEETS ===================== -->
+
+<!-- ADD ASSIGNMENT -->
+<div class="sheet-backdrop" id="backdrop-asgn-add" onclick="closeSheet('asgn-add')">
+  <div class="bottom-sheet" id="sheet-asgn-add" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Add a Grade</div>
+    <div class="sheet-title">Add Assignment</div>
     <div class="field-label">Assignment Name</div>
-    <input class="field-input" id="grade-name-input" placeholder="e.g. Chapter 8 Test" />
-    <div class="field-label">Score (out of 100)</div>
-    <input class="field-input" id="grade-score-input" type="number" placeholder="e.g. 88" min="0" max="100" />
-    <div class="field-label">Category</div>
-    <div class="cat-select-row" id="cat-select-row"></div>
-    <div class="field-label">Date (optional)</div>
-    <input class="field-input" id="grade-date-input" placeholder="e.g. Apr 30" />
-    <button class="save-btn" onclick="saveGrade()">Save Grade</button>
-  </div>
-</div>
-
-<!-- ADD ASSIGNMENT MODAL -->
-<div class="modal-backdrop" id="assign-modal">
-  <div class="modal">
-    <div class="modal-title">Add Assignment</div>
-    <div class="field-label">Assignment Name</div>
-    <input class="field-input" id="assign-name" placeholder="e.g. English Essay" style="margin-bottom:12px;" />
+    <input class="field-input" id="new-asgn-name" placeholder="e.g. English Essay"/>
     <div class="field-label">Class</div>
-    <input class="field-input" id="assign-class" placeholder="e.g. English" style="margin-bottom:12px;" />
-    <div class="field-label">Due Date</div>
-    <input class="field-input" id="assign-due" placeholder="e.g. Tomorrow, Monday, May 5" style="margin-bottom:12px;" />
+    <input class="field-input" id="new-asgn-class" placeholder="e.g. English"/>
+    <div class="field-label">Teacher</div>
+    <input class="field-input" id="new-asgn-teacher" placeholder="e.g. Ms. Cohen"/>
     <div class="field-label">Status</div>
-    <div class="cat-select-row">
-      <div class="cat-chip on" data-val="ns" onclick="selectStatus(this)">Not Started</div>
-      <div class="cat-chip" data-val="ip" onclick="selectStatus(this)">In Progress</div>
-      <div class="cat-chip" data-val="ms" onclick="selectStatus(this)">Missing</div>
+    <div class="status-row">
+      <div class="status-chip on" data-val="ns" onclick="selChip(this)">Not Started</div>
+      <div class="status-chip" data-val="ip" onclick="selChip(this)">In Progress</div>
+      <div class="status-chip" data-val="ms" onclick="selChip(this)">Missing</div>
     </div>
-    <button class="modal-btn" style="width:100%; margin-top:4px;" onclick="saveAssignment()">Add Assignment</button>
-    <button class="modal-cancel" onclick="closeModal('assign-modal')">Cancel</button>
+    <div class="field-label">Due Date</div>
+    <div id="add-asgn-mini-cal"></div>
+    <div class="field-label">Time (optional)</div>
+    <div id="add-asgn-time-picker"></div>
+    <button class="sheet-btn" onclick="saveNewAssignment()">Add Assignment</button>
+    <button class="sheet-cancel" onclick="closeSheet('asgn-add')">Cancel</button>
   </div>
 </div>
 
-<!-- ADD CLASS MODAL -->
-<div class="modal-backdrop" id="class-modal">
-  <div class="modal">
-    <div class="modal-title">Add Class</div>
-    <div class="field-label">Class Name</div>
-    <input class="field-input" id="class-name-input" placeholder="e.g. Geometry" style="margin-bottom:12px;" />
+<!-- EDIT ASSIGNMENT -->
+<div class="sheet-backdrop" id="backdrop-asgn-edit" onclick="closeSheet('asgn-edit')">
+  <div class="bottom-sheet" id="sheet-asgn-edit" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit Assignment</div>
+    <div class="field-label">Assignment Name</div>
+    <input class="field-input" id="edit-asgn-name"/>
+    <div class="field-label">Class</div>
+    <input class="field-input" id="edit-asgn-class"/>
     <div class="field-label">Teacher</div>
-    <input class="field-input" id="class-teacher-input" placeholder="e.g. Dr. Shahar" style="margin-bottom:12px;" />
+    <input class="field-input" id="edit-asgn-teacher"/>
+    <div class="field-label">Status</div>
+    <div class="status-row" id="edit-asgn-status-row">
+      <div class="status-chip" data-val="ns" onclick="selChip(this)">Not Started</div>
+      <div class="status-chip" data-val="ip" onclick="selChip(this)">In Progress</div>
+      <div class="status-chip" data-val="dn" onclick="selChip(this)">Done</div>
+      <div class="status-chip" data-val="ms" onclick="selChip(this)">Missing</div>
+    </div>
+    <div class="field-label">Due Date</div>
+    <div id="edit-asgn-mini-cal"></div>
+    <div class="field-label">Time (optional)</div>
+    <div id="edit-asgn-time-picker"></div>
+    <button class="sheet-btn" onclick="saveEditAssignment()">Save Changes</button>
+    <button class="sheet-del" onclick="deleteCurrentAssignment()">Delete Assignment</button>
+    <button class="sheet-cancel" onclick="closeSheet('asgn-edit')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD EVENT -->
+<div class="sheet-backdrop" id="backdrop-event-add" onclick="closeSheet('event-add')">
+  <div class="bottom-sheet" id="sheet-event-add" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Event</div>
+    <div class="field-label">Event Name</div>
+    <input class="field-input" id="new-event-name" placeholder="e.g. Family dinner, School meeting"/>
+    <div class="field-label">Type</div>
+    <div class="status-row">
+      <div class="status-chip on" data-val="personal" onclick="selChip(this)">Personal</div>
+      <div class="status-chip" data-val="school" onclick="selChip(this)">School</div>
+      <div class="status-chip" data-val="other" onclick="selChip(this)">Other</div>
+    </div>
+    <div class="field-label">Date</div>
+    <div id="add-event-mini-cal"></div>
+    <div class="field-label">Time (optional)</div>
+    <div id="add-event-time-picker"></div>
+    <button class="sheet-btn" onclick="saveNewEvent()">Save Event</button>
+    <button class="sheet-cancel" onclick="closeSheet('event-add')">Cancel</button>
+  </div>
+</div>
+
+<!-- EDIT EVENT -->
+<div class="sheet-backdrop" id="backdrop-event-edit" onclick="closeSheet('event-edit')">
+  <div class="bottom-sheet" id="sheet-event-edit" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit Event</div>
+    <div class="field-label">Event Name</div>
+    <input class="field-input" id="edit-event-name"/>
+    <div class="field-label">Type</div>
+    <div class="status-row" id="edit-event-type-row">
+      <div class="status-chip on" data-val="personal" onclick="selChip(this)">Personal</div>
+      <div class="status-chip" data-val="school" onclick="selChip(this)">School</div>
+      <div class="status-chip" data-val="other" onclick="selChip(this)">Other</div>
+    </div>
+    <div class="field-label">Date</div>
+    <div id="edit-event-mini-cal"></div>
+    <div class="field-label">Time</div>
+    <div id="edit-event-time-picker"></div>
+    <button class="sheet-btn" onclick="saveEditEvent()">Save Changes</button>
+    <button class="sheet-del" onclick="deleteCurrentEvent()">Remove Event</button>
+    <button class="sheet-cancel" onclick="closeSheet('event-edit')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD CLASS -->
+<div class="sheet-backdrop" id="backdrop-class-add" onclick="closeSheet('class-add')">
+  <div class="bottom-sheet" id="sheet-class-add" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add Class</div>
+    <div class="field-label">Class Name</div>
+    <input class="field-input" id="new-class-name" placeholder="e.g. Geometry"/>
+    <div class="field-label">Teacher</div>
+    <input class="field-input" id="new-class-teacher" placeholder="e.g. Dr. Shahar"/>
     <div class="field-label">Credits</div>
-    <input class="field-input" id="class-credits-input" type="number" placeholder="e.g. 1" min="0.5" max="5" step="0.5" style="margin-bottom:12px;" />
-    <div class="field-label">Categories (name:weight%, separate with comma)</div>
-    <input class="field-input" id="class-cats-input" placeholder="Tests:40,Homework:30,Quizzes:30" style="margin-bottom:12px;" />
-    <button class="modal-btn" style="width:100%; margin-top:4px;" onclick="saveClass()">Add Class</button>
-    <button class="modal-cancel" onclick="closeModal('class-modal')">Cancel</button>
+    <input class="field-input" id="new-class-credits" type="number" placeholder="1" step="0.5"/>
+    <div class="field-label">Categories (format: Name:Weight%, comma separated)</div>
+    <input class="field-input" id="new-class-cats" placeholder="Tests:40,Homework:30,Quizzes:30"/>
+    <button class="sheet-btn" onclick="saveNewClass()">Add Class</button>
+    <button class="sheet-cancel" onclick="closeSheet('class-add')">Cancel</button>
+  </div>
+</div>
+
+<!-- EDIT GRADE SYSTEM -->
+<div class="sheet-backdrop" id="backdrop-grade-system-edit" onclick="closeSheet('grade-system-edit')">
+  <div class="bottom-sheet" id="sheet-grade-system-edit" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit Grade System</div>
+    <div class="field-label">Class Name</div>
+    <input class="field-input" id="gs-name"/>
+    <div class="field-label">Teacher</div>
+    <input class="field-input" id="gs-teacher"/>
+    <div class="field-label">Credits</div>
+    <input class="field-input" id="gs-credits" type="number" step="0.5"/>
+    <div class="field-label">Categories</div>
+    <input class="field-input" id="gs-cats" placeholder="Tests:40,Homework:30,Quizzes:30"/>
+    <button class="sheet-btn" onclick="saveGradeSystem()">Save Changes</button>
+    <button class="sheet-del" onclick="deleteCurrentClass()">Delete Class</button>
+    <button class="sheet-cancel" onclick="closeSheet('grade-system-edit')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD GRADE -->
+<div class="sheet-backdrop" id="backdrop-grade-add" onclick="closeSheet('grade-add')">
+  <div class="bottom-sheet" id="sheet-grade-add" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add New Grade</div>
+    <div class="field-label">Assignment Name</div>
+    <input class="field-input" id="new-grade-name" placeholder="e.g. Chapter 8 Test"/>
+    <div class="field-label">Score (0–100)</div>
+    <input class="field-input" id="new-grade-score" type="number" placeholder="88" min="0" max="100"/>
+    <div class="field-label">Category</div>
+    <div class="status-row" id="new-grade-cat-row"></div>
+    <div class="field-label">Date (optional)</div>
+    <input class="field-input" id="new-grade-date" placeholder="e.g. Apr 30"/>
+    <button class="sheet-btn" onclick="saveNewGrade()">Save Grade</button>
+    <button class="sheet-cancel" onclick="closeSheet('grade-add')">Cancel</button>
+  </div>
+</div>
+
+<!-- EDIT GRADE -->
+<div class="sheet-backdrop" id="backdrop-grade-edit" onclick="closeSheet('grade-edit')">
+  <div class="bottom-sheet" id="sheet-grade-edit" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit Grade</div>
+    <div class="field-label">Assignment Name</div>
+    <input class="field-input" id="edit-grade-name"/>
+    <div class="field-label">Score</div>
+    <input class="field-input" id="edit-grade-score" type="number" min="0" max="100"/>
+    <div class="field-label">Category</div>
+    <div class="status-row" id="edit-grade-cat-row"></div>
+    <div class="field-label">Date</div>
+    <input class="field-input" id="edit-grade-date"/>
+    <button class="sheet-btn" onclick="saveEditGrade()">Save Changes</button>
+    <button class="sheet-del" onclick="deleteCurrentGrade()">Delete Grade</button>
+    <button class="sheet-cancel" onclick="closeSheet('grade-edit')">Cancel</button>
+  </div>
+</div>
+
+<!-- VERACROSS SYNC -->
+<div class="sheet-backdrop" id="backdrop-veracross-sync" onclick="closeSheet('veracross-sync')">
+  <div class="bottom-sheet" id="sheet-veracross-sync" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Sync from Veracross</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+      1. Open Veracross on your phone<br>
+      2. Screenshot your grades page<br>
+      3. Go to the AI tab<br>
+      4. Send the screenshot and say "sync my grades"<br>
+      5. The AI will read it and update everything automatically
+    </div>
+    <button class="sheet-btn" onclick="closeSheet('veracross-sync');switchTab('ai')">Go to AI →</button>
+    <button class="sheet-cancel" onclick="closeSheet('veracross-sync')">Close</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  SCHEDULE DATA (from Evan's real schedule)
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════ DATA ═══════════════════════
+const save = (k,v) => { try{localStorage.setItem('eai_'+k,JSON.stringify(v))}catch(e){} };
+const load = (k,d) => { try{const v=localStorage.getItem('eai_'+k);return v?JSON.parse(v):d}catch(e){return d} };
+
+let assignments = load('assignments', []);
+let events = load('events', [
+  {id:'e1',name:'Geometry Test',type:'school',date:'2026-4-28',time:'8:50 AM',color:'#dc2626'},
+  {id:'e2',name:'Talmud Quiz',type:'school',date:'2026-4-29',time:'',color:'#dc2626'},
+  {id:'e3',name:'Chemistry Test',type:'school',date:'2026-4-28',time:'',color:'#dc2626'},
+]);
+let classes = load('classes', [
+  {id:'c1',name:'Talmud 2H-B',teacher:'Rabbi Mark',credits:1,cats:[{name:'Tests',weight:50,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:20,grades:[]}]},
+  {id:'c2',name:'Tanakh 2H-B',teacher:'Rabbi Harari',credits:1,cats:[{name:'Tests',weight:50,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:20,grades:[]}]},
+  {id:'c3',name:'English 2HN',teacher:'Ms. Cohen',credits:1,cats:[{name:'Tests',weight:40,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:30,grades:[]}]},
+  {id:'c4',name:'Global History',teacher:'Mr. Engel',credits:1,cats:[{name:'Tests',weight:50,grades:[]},{name:'Homework',weight:25,grades:[]},{name:'Quizzes',weight:25,grades:[]}]},
+  {id:'c5',name:'Halakhah 2H-B',teacher:'Rabbi Tokayer',credits:1,cats:[{name:'Tests',weight:50,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:20,grades:[]}]},
+  {id:'c6',name:'Geometry',teacher:'Dr. Shahar',credits:1,cats:[{name:'Tests',weight:40,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:30,grades:[]}]},
+  {id:'c7',name:'Chemistry 2HN',teacher:'Mrs. Goldberg',credits:1,cats:[{name:'Tests',weight:40,grades:[]},{name:'Homework',weight:30,grades:[]},{name:'Quizzes',weight:30,grades:[]}]},
+  {id:'c8',name:'Hebrew Lang/Lit',teacher:'Mrs. Theil',credits:1,cats:[{name:'Tests',weight:50,grades:[]},{name:'Homework',weight:25,grades:[]},{name:'Quizzes',weight:25,grades:[]}]},
+  {id:'c9',name:'Visual Arts',teacher:'Ms. Erdos',credits:0.5,cats:[{name:'Projects',weight:70,grades:[]},{name:'Participation',weight:30,grades:[]}]},
+  {id:'c10',name:'Physical Education',teacher:'Mr. Kennedy',credits:0.5,cats:[{name:'Participation',weight:100,grades:[]}]},
+  {id:'c11',name:'SICHA',teacher:'Rabbi Churba',credits:0,cats:[{name:'Participation',weight:100,grades:[]}]},
+]);
+let currentFilter = 'all';
+let currentClassId = null;
+let currentAsgnId = null;
+let currentEventId = null;
+let currentGradeIdx = null;
+let calMonth = 3, calYear = 2026, calSelDay = 26;
+let chatHistory = [];
+
+// Mini cal states per sheet
+const miniCals = {};
+
+// ═══════════════════════ SCHEDULE DATA ═══════════════════════
 const SCHEDULE = {
-  1: [ // Monday
-    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
-    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
-    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
-    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Rm 301', start:'10:30', end:'11:16' },
-    { name:'Lunch', teacher:'', room:'', start:'11:20', end:'12:06', isBreak:true },
-    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'12:10', end:'12:56' },
-    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'1:00', end:'1:46' },
-    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:50', end:'2:36' },
-    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
-    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'3:00', end:'3:46' },
-    { name:'Physical Education', teacher:'Mr. Kennedy', room:'Gym', start:'3:50', end:'4:36' },
+  1:[
+    {t:'7:45–8:50',n:'Minyan',tc:'Mr. Chalouh',r:'AUD',brk:true},
+    {t:'8:50–9:36',n:'Talmud 2H-B',tc:'Rabbi Mark',r:'Rm 221'},
+    {t:'9:40–10:26',n:'Halakhah 2H-B',tc:'Rabbi Tokayer',r:'Rm 405'},
+    {t:'10:30–11:16',n:'Geometry',tc:'Dr. Shahar',r:'Rm 301'},
+    {t:'11:20–12:06',n:'Lunch',brk:true},
+    {t:'12:10–12:56',n:'English 2HN',tc:'Ms. Cohen',r:'Rm 205'},
+    {t:'1:00–1:46',n:'Chemistry 2HN',tc:'Mrs. Goldberg',r:'Rm 306'},
+    {t:'1:50–2:36',n:'Tanakh 2H-B',tc:'Rabbi Harari',r:'Rm 324'},
+    {t:'2:40',n:'Mincha',r:'AUD',brk:true},
+    {t:'3:00–3:46',n:'Global History',tc:'Mr. Engel',r:'Rm 202'},
+    {t:'3:50–4:36',n:'Physical Education',tc:'Mr. Kennedy',r:'Gym'},
   ],
-  2: [ // Tuesday
-    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
-    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
-    { name:'Visual Arts 2HN', teacher:'Ms. Erdos', room:'Art Rm', start:'9:40', end:'10:26' },
-    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'2nd FL Lib', start:'10:30', end:'11:16' },
-    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'11:20', end:'12:06' },
-    { name:'Lunch', teacher:'', room:'', start:'12:10', end:'12:56', isBreak:true },
-    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'1:00', end:'1:46' },
-    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'1:50', end:'2:36' },
-    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
-    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 412', start:'3:00', end:'3:46' },
-    { name:'SICHA 2HN', teacher:'Rabbi Churba', room:'Rm 321', start:'3:50', end:'4:36' },
+  2:[
+    {t:'7:45–8:50',n:'Minyan',tc:'Mr. Chalouh',r:'AUD',brk:true},
+    {t:'8:50–9:36',n:'Talmud 2H-B',tc:'Rabbi Mark',r:'Rm 221'},
+    {t:'9:40–10:26',n:'Visual Arts',tc:'Ms. Erdos',r:'Art Rm'},
+    {t:'10:30–11:16',n:'Geometry',tc:'Dr. Shahar',r:'2nd FL Lib'},
+    {t:'11:20–12:06',n:'Hebrew Lang/Lit',tc:'Mrs. Theil',r:'Rm 203'},
+    {t:'12:10–12:56',n:'Lunch',brk:true},
+    {t:'1:00–1:46',n:'English 2HN',tc:'Ms. Cohen',r:'Rm 205'},
+    {t:'1:50–2:36',n:'Chemistry 2HN',tc:'Mrs. Goldberg',r:'Rm 306'},
+    {t:'2:40',n:'Mincha',r:'AUD',brk:true},
+    {t:'3:00–3:46',n:'Global History',tc:'Mr. Engel',r:'Rm 412'},
+    {t:'3:50–4:36',n:'SICHA',tc:'Rabbi Churba',r:'Rm 321'},
   ],
-  3: [ // Wednesday
-    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
-    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
-    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
-    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Rm 324', start:'10:30', end:'11:16' },
-    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'11:20', end:'12:06' },
-    { name:'Lunch', teacher:'', room:'', start:'12:10', end:'12:56', isBreak:true },
-    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'1:00', end:'1:46' },
-    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:50', end:'2:36' },
-    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
-    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'3:00', end:'3:46' },
-    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'3:50', end:'4:36' },
+  3:[
+    {t:'7:45–8:50',n:'Minyan',tc:'Mr. Chalouh',r:'AUD',brk:true},
+    {t:'8:50–9:36',n:'Talmud 2H-B',tc:'Rabbi Mark',r:'Rm 221'},
+    {t:'9:40–10:26',n:'Halakhah 2H-B',tc:'Rabbi Tokayer',r:'Rm 405'},
+    {t:'10:30–11:16',n:'Geometry',tc:'Dr. Shahar',r:'Rm 324'},
+    {t:'11:20–12:06',n:'Hebrew Lang/Lit',tc:'Mrs. Theil',r:'Rm 203'},
+    {t:'12:10–12:56',n:'Lunch',brk:true},
+    {t:'1:00–1:46',n:'English 2HN',tc:'Ms. Cohen',r:'Rm 205'},
+    {t:'1:50–2:36',n:'Tanakh 2H-B',tc:'Rabbi Harari',r:'Rm 324'},
+    {t:'2:40',n:'Mincha',r:'AUD',brk:true},
+    {t:'3:00–3:46',n:'Global History',tc:'Mr. Engel',r:'Rm 202'},
+    {t:'3:50–4:36',n:'Chemistry 2HN',tc:'Mrs. Goldberg',r:'Rm 306'},
   ],
-  4: [ // Thursday
-    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:50' },
-    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'8:50', end:'9:36' },
-    { name:'Halakhah 2H-B', teacher:'Rabbi Tokayer', room:'Rm 405', start:'9:40', end:'10:26' },
-    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'2nd FL Lib', start:'10:30', end:'11:16' },
-    { name:'Lunch / Mathletes', teacher:'Ms. Issever', room:'Rm 204', start:'11:20', end:'12:06', isBreak:true },
-    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'12:10', end:'12:56' },
-    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'1:00', end:'1:46' },
-    { name:'Visual Arts 2HN', teacher:'Ms. Erdos', room:'Art Rm', start:'1:50', end:'2:36' },
-    { name:'Mincha', teacher:'', room:'AUD', start:'2:40', end:'2:50', isBreak:true },
-    { name:'English 2HN/HR-I', teacher:'Ms. Cohen', room:'Rm 205', start:'3:00', end:'3:46' },
-    { name:'Chemistry 2HN', teacher:'Mrs. Goldberg', room:'Rm 306', start:'3:50', end:'4:36' },
+  4:[
+    {t:'7:45–8:50',n:'Minyan',tc:'Mr. Chalouh',r:'AUD',brk:true},
+    {t:'8:50–9:36',n:'Talmud 2H-B',tc:'Rabbi Mark',r:'Rm 221'},
+    {t:'9:40–10:26',n:'Halakhah 2H-B',tc:'Rabbi Tokayer',r:'Rm 405'},
+    {t:'10:30–11:16',n:'Geometry',tc:'Dr. Shahar',r:'2nd FL Lib'},
+    {t:'11:20–12:06',n:'Lunch / Mathletes',tc:'Ms. Issever',r:'Rm 204',brk:true},
+    {t:'12:10–12:56',n:'Chemistry 2HN',tc:'Mrs. Goldberg',r:'Rm 306'},
+    {t:'1:00–1:46',n:'Tanakh 2H-B',tc:'Rabbi Harari',r:'Rm 324'},
+    {t:'1:50–2:36',n:'Visual Arts',tc:'Ms. Erdos',r:'Art Rm'},
+    {t:'2:40',n:'Mincha',r:'AUD',brk:true},
+    {t:'3:00–3:46',n:'English 2HN',tc:'Ms. Cohen',r:'Rm 205'},
+    {t:'3:50–4:36',n:'Chemistry 2HN',tc:'Mrs. Goldberg',r:'Rm 306'},
   ],
-  5: [ // Friday
-    { name:'Minyan', teacher:'Mr. Chalouh', room:'AUD', start:'7:45', end:'8:40' },
-    { name:'Hebrew Lang/Lit 2HN', teacher:'Mrs. Theil', room:'Rm 203', start:'8:40', end:'9:26' },
-    { name:'Talmud 2H-B', teacher:'Rabbi Mark', room:'Rm 221', start:'9:30', end:'10:16' },
-    { name:'Geometry 2HN/HR I', teacher:'Dr. Shahar', room:'Art Rm', start:'10:20', end:'11:06' },
-    { name:'Lunch', teacher:'', room:'', start:'11:10', end:'11:46', isBreak:true },
-    { name:'Tanakh 2H-B', teacher:'Rabbi Harari', room:'Rm 324', start:'11:50', end:'12:36' },
-    { name:'Global History & Geo', teacher:'Mr. Engel', room:'Rm 202', start:'12:40', end:'1:26' },
+  5:[
+    {t:'7:45–8:40',n:'Minyan',tc:'Mr. Chalouh',r:'AUD',brk:true},
+    {t:'8:40–9:26',n:'Hebrew Lang/Lit',tc:'Mrs. Theil',r:'Rm 203'},
+    {t:'9:30–10:16',n:'Talmud 2H-B',tc:'Rabbi Mark',r:'Rm 221'},
+    {t:'10:20–11:06',n:'Geometry',tc:'Dr. Shahar',r:'Art Rm'},
+    {t:'11:10–11:46',n:'Lunch',brk:true},
+    {t:'11:50–12:36',n:'Tanakh 2H-B',tc:'Rabbi Harari',r:'Rm 324'},
+    {t:'12:40–1:26',n:'Global History',tc:'Mr. Engel',r:'Rm 202'},
   ],
 };
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
 
-// ═══════════════════════════════════════════════════════
-//  STORAGE
-// ═══════════════════════════════════════════════════════
-function save(key, val) { try { localStorage.setItem('evanai_'+key, JSON.stringify(val)); } catch(e){} }
-function load(key, def) { try { const v = localStorage.getItem('evanai_'+key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+// UPCOMING TESTS pre-loaded
+const PRESET_TESTS = [
+  {id:'t1',name:'Tanakh Test',type:'school',date:'2026-4-27',time:'',color:'#dc2626'},
+  {id:'t2',name:'Geometry Test',type:'school',date:'2026-4-28',time:'',color:'#dc2626'},
+  {id:'t3',name:'Talmud Quiz',type:'school',date:'2026-4-29',time:'',color:'#dc2626'},
+  {id:'t4',name:'Chemistry Test',type:'school',date:'2026-4-28',time:'',color:'#dc2626'},
+  {id:'t5',name:'Halakhah Test',type:'school',date:'2026-5-4',time:'',color:'#dc2626'},
+  {id:'t6',name:'History Test',type:'school',date:'2026-5-11',time:'',color:'#dc2626'},
+  {id:'t7',name:'History Test',type:'school',date:'2026-5-12',time:'',color:'#dc2626'},
+  {id:'t8',name:'Hebrew Test',type:'school',date:'2026-5-12',time:'',color:'#dc2626'},
+  {id:'t9',name:'Geometry Final Exam',type:'school',date:'2026-6-9',time:'',color:'#7c3aed'},
+  {id:'t10',name:'Tanakh Final',type:'school',date:'2026-6-9',time:'',color:'#7c3aed'},
+  {id:'t11',name:'Halakhah Final',type:'school',date:'2026-6-10',time:'',color:'#7c3aed'},
+  {id:'t12',name:'English Final',type:'school',date:'2026-6-11',time:'',color:'#7c3aed'},
+  {id:'t13',name:'Hebrew Final',type:'school',date:'2026-6-12',time:'',color:'#7c3aed'},
+  {id:'t14',name:'Talmud Final',type:'school',date:'2026-6-15',time:'',color:'#7c3aed'},
+  {id:'t15',name:'Algebra I Regents',type:'school',date:'2026-6-17',time:'AM',color:'#7c3aed'},
+  {id:'t16',name:'Geometry Regents',type:'school',date:'2026-6-23',time:'PM',color:'#7c3aed'},
+  {id:'t17',name:'Chemistry Regents',type:'school',date:'2026-6-24',time:'AM',color:'#7c3aed'},
+];
 
-let assignments = load('assignments', []);
-let classes = load('classes', []);
-let tests = load('tests', []);
-let currentClassId = null;
-let currentFilter = 'all';
-let selectedStatus = 'ns';
-let selectedCat = 0;
-let chatHistory = [];
+// Merge preset tests if not already there
+PRESET_TESTS.forEach(t => { if (!events.find(e => e.id === t.id)) events.push(t); });
+save('events', events);
 
-// ═══════════════════════════════════════════════════════
-//  SETUP / API KEY
-// ═══════════════════════════════════════════════════════
-function saveApiKey() {
-  const key = document.getElementById('api-key-input').value.trim();
-  if (!key.startsWith('sk-ant-')) { alert('That doesn\'t look right. Make sure it starts with sk-ant-'); return; }
-  save('apikey', key);
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  initApp();
-}
-
-function getApiKey() { return load('apikey', ''); }
-
-// ═══════════════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════════════
-function goTo(id, tab) {
+// ═══════════════════════ NAVIGATION ═══════════════════════
+function switchTab(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  tab.classList.add('active');
+  const screen = document.getElementById('screen-' + id);
+  if (screen) screen.classList.add('active');
+  const tab = document.querySelector(`.nav-tab[data-screen="${id}"]`);
+  if (tab) tab.classList.add('active');
+  if (id === 'sched') renderScheduleTabs();
+  if (id === 'cal') buildCalendar();
+  if (id === 'grades') renderGrades();
+  if (id === 'work') renderAssignments();
+  if (id === 'home') updateHomeScreen();
 }
 
-// ═══════════════════════════════════════════════════════
-//  TIME UTILS
-// ═══════════════════════════════════════════════════════
-function parseTime(t) {
-  const [h,m] = t.split(':').map(Number);
-  return h*60+m;
+// ═══════════════════════ SHEETS / PANELS ═══════════════════════
+function openSheet(id) {
+  document.getElementById('backdrop-' + id).classList.add('open');
+  document.getElementById('sheet-' + id).classList.add('open');
 }
 
-function formatTime(t) {
-  const h = Math.floor(t/60), m = t%60;
-  const ampm = h>=12?'PM':'AM';
-  const hh = h>12?h-12:h===0?12:h;
-  return `${hh}:${m.toString().padStart(2,'0')} ${ampm}`;
+function closeSheet(id) {
+  document.getElementById('backdrop-' + id).classList.remove('open');
+  document.getElementById('sheet-' + id).classList.remove('open');
 }
 
-function getNowMinutes() {
-  const now = new Date();
-  return now.getHours()*60+now.getMinutes();
-}
+function openPanel(id) { document.getElementById('panel-' + id).classList.add('open'); }
+function closePanel(id) { document.getElementById('panel-' + id).classList.remove('open'); }
 
-function getCurrentDay() { return new Date().getDay(); }
+// ═══════════════════════ TIME UTILS ═══════════════════════
+function parseTime(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+function getNow() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function getDay() { return new Date().getDay(); }
 
-// ═══════════════════════════════════════════════════════
-//  CURRENT CLASS LOGIC
-// ═══════════════════════════════════════════════════════
 function getCurrentAndNext() {
-  const day = getCurrentDay();
-  const daySchedule = SCHEDULE[day];
-  if (!daySchedule) return { current: null, next: null, progress: 0 };
-
-  const now = getNowMinutes();
-  let current = null, next = null, progress = 0;
-
-  for (let i = 0; i < daySchedule.length; i++) {
-    const p = daySchedule[i];
-    const s = parseTime(p.start), e = parseTime(p.end);
+  const day = getDay();
+  const sched = SCHEDULE[day];
+  if (!sched) return { current:null, next:null, prog:0 };
+  const now = getNow();
+  let current=null, next=null, prog=0;
+  for (let i=0; i<sched.length; i++) {
+    const p = sched[i];
+    const parts = p.t.split('–');
+    if (parts.length < 2) continue;
+    const s = parseTime(parts[0]), e = parseTime(parts[1]);
     if (now >= s && now < e) {
       current = p;
-      progress = Math.round(((now - s) / (e - s)) * 100);
-      if (i+1 < daySchedule.length) next = daySchedule[i+1];
+      prog = Math.round(((now-s)/(e-s))*100);
+      if (i+1 < sched.length) next = sched[i+1];
       break;
     }
     if (now < s && !next) next = p;
   }
-  return { current, next, progress };
+  return {current, next, prog};
 }
 
-function updateCurrentClass() {
-  const { current, next, progress } = getCurrentAndNext();
-  const hour = new Date().getHours();
-
-  // time of day
-  document.getElementById('time-of-day').textContent = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-
-  // home
+// ═══════════════════════ HOME ═══════════════════════
+function updateHomeScreen() {
+  const h = new Date().getHours();
+  document.getElementById('time-greeting').textContent = h<12?'Good morning,':h<17?'Good afternoon,':'Good evening,';
+  const {current, next, prog} = getCurrentAndNext();
   const hcc = document.getElementById('home-current-class');
   const hct = document.getElementById('home-current-teacher');
   const htime = document.getElementById('home-current-time');
   const hprog = document.getElementById('home-prog');
-
-  if (current && !current.isBreak) {
-    hcc.textContent = current.name;
-    hct.textContent = current.teacher + (current.room ? ' · ' + current.room : '');
-    htime.textContent = current.start + ' — ' + current.end + ' · ' + progress + '% through';
-    hprog.style.width = progress + '%';
+  if (current && !current.brk) {
+    hcc.textContent = current.n;
+    hct.textContent = (current.tc||'') + (current.r?' · '+current.r:'');
+    htime.textContent = current.t + ' · ' + prog + '% through';
+    hprog.style.width = prog + '%';
   } else {
-    const day = getCurrentDay();
-    hcc.textContent = day === 0 || day === 6 ? 'Weekend' : 'Nothing right now';
-    hct.textContent = '';
-    htime.textContent = '';
-    hprog.style.width = '0%';
+    const day = getDay();
+    hcc.textContent = day===0||day===6 ? 'Weekend 🎉' : 'Nothing right now';
+    hct.textContent = ''; htime.textContent = 'Tap to open calendar'; hprog.style.width='0%';
   }
-
-  if (next && !next.isBreak) {
-    document.getElementById('home-next-class').textContent = next.name;
-    document.getElementById('home-next-time').textContent = next.teacher + ' · ' + next.room + ' · ' + next.start;
-  } else if (next && next.isBreak) {
-    document.getElementById('home-next-class').textContent = next.name;
-    document.getElementById('home-next-time').textContent = next.start;
+  if (next && !next.brk) {
+    document.getElementById('home-next-class').textContent = next.n;
+    document.getElementById('home-next-time').textContent = (next.tc||'') + ' · Starts ' + (next.t.split('–')[0]||next.t);
+  } else if (next && next.brk) {
+    document.getElementById('home-next-class').textContent = next.n;
+    document.getElementById('home-next-time').textContent = next.t.split('–')[0]||next.t;
   } else {
     document.getElementById('home-next-class').textContent = 'Nothing coming up';
     document.getElementById('home-next-time').textContent = '';
   }
-
-  // schedule screen
-  const scc = document.getElementById('sched-current-class');
-  const sct = document.getElementById('sched-current-teacher');
-  const sprog = document.getElementById('sched-prog');
-  const snext = document.getElementById('sched-next-text');
-
-  if (current && !current.isBreak) {
-    scc.textContent = current.name;
-    sct.textContent = current.teacher + ' · ' + current.room;
-    sprog.style.width = progress + '%';
-    snext.textContent = next ? 'Next: ' + next.name + ' at ' + next.start : 'Last class of the day';
-  } else {
-    scc.textContent = 'Nothing right now';
-    sct.textContent = '';
-    sprog.style.width = '0%';
-    snext.textContent = next ? 'Next: ' + next.name + ' at ' + next.start : '';
+  // avg
+  const {avg} = calcOverall();
+  document.getElementById('home-avg').textContent = avg !== null ? avg.toFixed(1) : '—';
+  // next test
+  const today = new Date();
+  const todayStr = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  const upcomingTests = events.filter(e => e.color==='#dc2626'||e.color==='#7c3aed').filter(e => e.date >= todayStr).sort((a,b)=>a.date>b.date?1:-1);
+  if (upcomingTests.length > 0) {
+    const t = upcomingTests[0];
+    const d = new Date(t.date.replace(/-/g,'/'));
+    const diff = Math.round((d-today)/86400000);
+    document.getElementById('home-test-name').textContent = t.name;
+    const tDays = document.getElementById('home-test-days');
+    tDays.textContent = diff<=0?'Today!':diff===1?'Tomorrow':'In '+diff+' days';
+    tDays.style.color = diff<=1?'#dc2626':diff<=3?'#ca8a04':'var(--muted)';
   }
+  // due soon
+  const pending = assignments.filter(a => a.status!=='dn').slice(0,3);
+  const dueList = document.getElementById('home-due-list');
+  if (!pending.length) { dueList.innerHTML='<div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">All caught up 🎉</div>'; return; }
+  dueList.innerHTML = pending.map(a => `<div class="due-row" onclick="openAsgnDetail('${a.id}')">
+    <div><div style="font-size:13px;font-weight:500">${a.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${a.className}</div></div>
+    <div style="font-size:11px;font-weight:500;color:${a.status==='ms'?'var(--red)':'var(--yellow)'}">${a.due||'TBD'}</div>
+  </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-//  SCHEDULE RENDER
-// ═══════════════════════════════════════════════════════
-function renderSchedule(dayIndex) {
-  const daySchedule = SCHEDULE[dayIndex];
-  const now = getNowMinutes();
-  const today = getCurrentDay();
-  let html = '';
-
-  if (!daySchedule) {
-    html = '<div style="padding:20px; text-align:center; color:var(--muted); font-size:13px;">No classes</div>';
-  } else {
-    daySchedule.forEach(p => {
-      const s = parseTime(p.start);
-      const e = parseTime(p.end);
-      const isCurrent = dayIndex === today && now >= s && now < e;
-      const color = p.isBreak ? 'var(--muted)' : 'var(--text)';
-      html += `<div class="srow">
-        <div class="stime">${p.start}${p.end ? '–'+p.end : ''}</div>
-        <div class="sinfo">
-          <div class="sclass" style="color:${color}">${p.name}</div>
-          ${p.teacher ? `<div class="steacher">${p.teacher}${p.room ? ' · '+p.room : ''}</div>` : ''}
-        </div>
-        ${isCurrent ? '<div class="now-badge">NOW</div>' : ''}
-      </div>`;
-    });
-  }
-
-  document.getElementById('schedule-list').innerHTML = html;
+function addClassroomAssignment() {
+  assignments.push({id:'a'+Date.now(),name:'Reflection 22: Act I + Movie adaptation',className:'English',teacher:'Ms. Cohen',due:'Tomorrow',status:'ns',notes:''});
+  save('assignments',assignments);
+  document.getElementById('classroom-banner').style.display='none';
+  renderAssignments();
+  updateHomeScreen();
 }
 
-function buildDayTabs() {
-  const today = getCurrentDay();
-  const days = [{d:1,l:'Mon'},{d:2,l:'Tue'},{d:3,l:'Wed'},{d:4,l:'Thu'},{d:5,l:'Fri'}];
-  const now = new Date();
-  let html = '';
-  days.forEach(({d,l}) => {
-    const diff = d - today;
-    const date = new Date(now); date.setDate(now.getDate() + diff);
-    const dateNum = date.getDate();
-    const isToday = d === today;
-    html += `<button class="day-chip ${isToday?'on':''}" onclick="selectDay(this,${d})">${l}<span class="dn">${dateNum}</span></button>`;
-  });
-  document.getElementById('day-tabs').innerHTML = html;
-  const activeDay = today >= 1 && today <= 5 ? today : 1;
-  renderSchedule(activeDay);
-}
+function dismissClassroom() { document.getElementById('classroom-banner').style.display='none'; }
 
-function selectDay(el, dayIndex) {
-  document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  renderSchedule(dayIndex);
-}
-
-// ═══════════════════════════════════════════════════════
-//  ASSIGNMENTS
-// ═══════════════════════════════════════════════════════
-const statusMap = { ns:'Not Started', ip:'In Progress', dn:'Done', ms:'Missing' };
-const statusClass = { ns:'ns', ip:'ip', dn:'dn', ms:'ms' };
+// ═══════════════════════ ASSIGNMENTS ═══════════════════════
+const statusMap = {ns:'Not Started',ip:'In Progress',dn:'Done',ms:'Missing'};
+const statusPillClass = {ns:'pill-ns',ip:'pill-ip',dn:'pill-dn',ms:'pill-ms'};
 
 function renderAssignments() {
-  const filtered = currentFilter === 'all' ? assignments : assignments.filter(a => a.status === currentFilter);
-
-  // todo list
-  let todoHtml = filtered.length === 0
-    ? '<div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No assignments — tap + to add</div>'
-    : '';
-
-  filtered.forEach((a, i) => {
-    const realIdx = assignments.indexOf(a);
-    const isDone = a.status === 'dn';
-    todoHtml += `<div class="todo-row">
-      <div class="circle-check ${isDone?'checked':''}" onclick="toggleDone(${realIdx})">${isDone?'✓':''}</div>
-      <div class="todo-label ${isDone?'done-text':''}">${a.name}</div>
-      <button class="pill ${statusClass[a.status]}" onclick="cycleStatus(${realIdx})">${statusMap[a.status]} ▾</button>
-    </div>`;
-  });
-  document.getElementById('todo-list').innerHTML = todoHtml;
-
-  // detail cards
-  let detailHtml = '';
-  filtered.forEach((a) => {
-    const realIdx = assignments.indexOf(a);
-    detailHtml += `<div class="asgn-card">
-      <div class="asgn-top">
-        <div>
-          <div class="asgn-name">${a.name}</div>
-          <div class="asgn-due">Due ${a.due}${a.teacher ? ' · ' + a.teacher : ''}</div>
-        </div>
-        <button class="pill ${statusClass[a.status]}" onclick="cycleStatus(${realIdx})">${statusMap[a.status]} ▾</button>
-      </div>
-      <div class="asgn-bottom">
-        <div class="class-badge">${a.className}</div>
-        <button class="ai-mini-btn" onclick="askAIAbout('${a.name}', '${a.className}')">Ask AI →</button>
-      </div>
-    </div>`;
-  });
-  document.getElementById('assign-details').innerHTML = detailHtml || '<div style="text-align:center; color:var(--muted); font-size:13px; padding:20px 0;">No assignments match this filter</div>';
-
-  // update home due soon
-  updateHomeDue();
-}
-
-function toggleDone(idx) {
-  assignments[idx].status = assignments[idx].status === 'dn' ? 'ns' : 'dn';
-  save('assignments', assignments);
-  renderAssignments();
-}
-
-function cycleStatus(idx) {
-  const order = ['ns','ip','dn','ms'];
-  const cur = order.indexOf(assignments[idx].status);
-  assignments[idx].status = order[(cur+1)%order.length];
-  save('assignments', assignments);
-  renderAssignments();
-}
-
-function filterAssign(el, filter) {
-  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  currentFilter = filter;
-  renderAssignments();
-}
-
-function updateHomeDue() {
-  const pending = assignments.filter(a => a.status !== 'dn').slice(0,3);
-  if (pending.length === 0) {
-    document.getElementById('home-due-list').innerHTML = '<div class="due-row" style="justify-content:center;padding:16px 0;"><span style="color:var(--muted);font-size:13px;">All caught up 🎉</span></div>';
-    return;
+  const filtered = currentFilter==='all' ? assignments : assignments.filter(a=>a.status===currentFilter);
+  // todo
+  const todoEl = document.getElementById('todo-list');
+  if (!filtered.length) { todoEl.innerHTML='<div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No assignments — tap + to add</div>'; }
+  else {
+    todoEl.innerHTML = filtered.map(a => `<div class="todo-item">
+      <div class="bullet-dot"></div>
+      <div style="flex:1;font-size:13px;font-weight:500;${a.status==='dn'?'text-decoration:line-through;color:var(--muted)':''}">${a.name}</div>
+      <button class="pill ${statusPillClass[a.status]}" onclick="cycleStatus('${a.id}',event)">${statusMap[a.status]} ▾</button>
+    </div>`).join('');
   }
-  let html = '';
-  pending.forEach(a => {
-    html += `<div class="due-row">
-      <div><div class="due-name">${a.name}</div><div class="due-class-label">${a.className}</div></div>
-      <div class="due-red">${a.due}</div>
-    </div>`;
-  });
-  document.getElementById('home-due-list').innerHTML = html;
+  // details
+  const detailEl = document.getElementById('assign-details');
+  if (!filtered.length) { detailEl.innerHTML=''; return; }
+  detailEl.innerHTML = filtered.map(a => `<div class="asgn-card" onclick="openAsgnDetail('${a.id}')">
+    <div class="asgn-top">
+      <div><div style="font-size:13px;font-weight:600">${a.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Due ${a.due||'TBD'}${a.teacher?' · '+a.teacher:''}</div></div>
+      <button class="pill ${statusPillClass[a.status]}" onclick="cycleStatus('${a.id}',event)">${statusMap[a.status]} ▾</button>
+    </div>
+    <div class="asgn-bot">
+      <div class="class-tag">${a.className||'General'}</div>
+      <div style="display:flex;gap:7px">
+        <button class="mini-btn" onclick="event.stopPropagation();openEditAssignmentById('${a.id}')">Edit</button>
+        <button class="mini-btn" style="color:var(--blue);background:#eff6ff;border-color:#bfdbfe" onclick="event.stopPropagation();askAIAboutAsgn('${a.name}','${a.className}')">Ask AI →</button>
+      </div>
+    </div>
+  </div>`).join('');
 }
 
-function openAddAssignment() {
-  document.getElementById('assign-name').value = '';
-  document.getElementById('assign-class').value = '';
-  document.getElementById('assign-due').value = '';
-  selectedStatus = 'ns';
-  document.querySelectorAll('#assign-modal .cat-chip').forEach(c => { c.classList.toggle('on', c.dataset.val === 'ns'); });
-  document.getElementById('assign-modal').classList.add('open');
+function cycleStatus(id, evt) {
+  evt.stopPropagation();
+  const order = ['ns','ip','dn','ms'];
+  const a = assignments.find(x=>x.id===id);
+  if (!a) return;
+  a.status = order[(order.indexOf(a.status)+1)%order.length];
+  save('assignments',assignments);
+  renderAssignments(); updateHomeScreen();
 }
 
-function selectStatus(el) {
-  document.querySelectorAll('#assign-modal .cat-chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  selectedStatus = el.dataset.val;
-}
-
-function saveAssignment() {
-  const name = document.getElementById('assign-name').value.trim();
-  const cls = document.getElementById('assign-class').value.trim();
-  const due = document.getElementById('assign-due').value.trim();
-  if (!name) { alert('Please enter an assignment name'); return; }
-  assignments.push({ name, className: cls||'General', due: due||'TBD', status: selectedStatus });
-  save('assignments', assignments);
-  closeModal('assign-modal');
+function filterAssign(el, f) {
+  document.querySelectorAll('#screen-work .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = f;
   renderAssignments();
 }
 
-// ═══════════════════════════════════════════════════════
-//  GRADES
-// ═══════════════════════════════════════════════════════
-function getLetterGrade(avg) {
-  if (avg >= 93) return 'A';
-  if (avg >= 90) return 'A-';
-  if (avg >= 87) return 'B+';
-  if (avg >= 83) return 'B';
-  if (avg >= 80) return 'B-';
-  if (avg >= 77) return 'C+';
-  if (avg >= 73) return 'C';
-  if (avg >= 70) return 'C-';
-  return 'D';
+function openAsgnDetail(id) {
+  const a = assignments.find(x=>x.id===id);
+  if (!a) return;
+  currentAsgnId = id;
+  document.getElementById('pa-name').textContent = a.name;
+  document.getElementById('pa-sub').textContent = 'Due '+a.due+' · '+a.teacher;
+  document.getElementById('pa-class').textContent = a.className;
+  const pill = document.getElementById('pa-status');
+  pill.textContent = statusMap[a.status];
+  pill.className = 'pill ' + statusPillClass[a.status];
+  document.getElementById('pa-notes').value = a.notes || '';
+  openPanel('asgn');
 }
 
-function getLetterClass(letter) {
-  if (letter.startsWith('A')) return 'A';
-  if (letter.startsWith('B')) return 'B';
-  if (letter.startsWith('C')) return 'C';
-  return 'D';
+function saveAsgnNotes() {
+  const a = assignments.find(x=>x.id===currentAsgnId);
+  if (a) { a.notes = document.getElementById('pa-notes').value; save('assignments',assignments); }
 }
 
-function calcClassAvg(cls) {
-  if (!cls.categories || cls.categories.length === 0) return null;
-  let total = 0, totalWeight = 0;
-  cls.categories.forEach(cat => {
-    if (cat.grades && cat.grades.length > 0) {
-      const avg = cat.grades.reduce((a,b) => a+b.score, 0) / cat.grades.length;
-      total += avg * (cat.weight / 100);
-      totalWeight += cat.weight;
-    }
+function openEditAssignment() { if (currentAsgnId) openEditAssignmentById(currentAsgnId); }
+function openEditAssignmentById(id) {
+  const a = assignments.find(x=>x.id===id);
+  if (!a) return;
+  currentAsgnId = id;
+  document.getElementById('edit-asgn-name').value = a.name;
+  document.getElementById('edit-asgn-class').value = a.className;
+  document.getElementById('edit-asgn-teacher').value = a.teacher||'';
+  document.querySelectorAll('#edit-asgn-status-row .status-chip').forEach(c=>{c.classList.toggle('on',c.dataset.val===a.status)});
+  buildMiniCal('edit-asgn-mini-cal', 'ea-mini');
+  buildTimePicker('edit-asgn-time-picker', 'ea-time');
+  openSheet('asgn-edit');
+}
+
+function saveNewAssignment() {
+  const name = document.getElementById('new-asgn-name').value.trim();
+  if (!name) return;
+  const chip = document.querySelector('#sheet-asgn-add .status-chip.on');
+  const date = getSelectedMiniDate('add-asgn-mini-cal');
+  const time = getSelectedTime('add-asgn-time-picker');
+  assignments.push({
+    id:'a'+Date.now(), name,
+    className: document.getElementById('new-asgn-class').value||'General',
+    teacher: document.getElementById('new-asgn-teacher').value||'',
+    due: date ? formatDate(date) : (time||'TBD'),
+    status: chip?.dataset.val||'ns', notes:''
   });
-  if (totalWeight === 0) return null;
-  return Math.round(total * (100 / totalWeight) * 10) / 10;
+  save('assignments',assignments);
+  closeSheet('asgn-add');
+  document.getElementById('new-asgn-name').value='';
+  document.getElementById('new-asgn-class').value='';
+  document.getElementById('new-asgn-teacher').value='';
+  renderAssignments(); updateHomeScreen();
 }
 
-function calcGPA(avg) {
-  if (avg >= 93) return 4.0;
-  if (avg >= 90) return 3.7;
-  if (avg >= 87) return 3.3;
-  if (avg >= 83) return 3.0;
-  if (avg >= 80) return 2.7;
-  if (avg >= 77) return 2.3;
-  if (avg >= 73) return 2.0;
-  if (avg >= 70) return 1.7;
+function saveEditAssignment() {
+  const a = assignments.find(x=>x.id===currentAsgnId);
+  if (!a) return;
+  const chip = document.querySelector('#edit-asgn-status-row .status-chip.on');
+  const date = getSelectedMiniDate('edit-asgn-mini-cal');
+  a.name = document.getElementById('edit-asgn-name').value||a.name;
+  a.className = document.getElementById('edit-asgn-class').value||a.className;
+  a.teacher = document.getElementById('edit-asgn-teacher').value;
+  a.status = chip?.dataset.val||a.status;
+  if (date) a.due = formatDate(date);
+  save('assignments',assignments);
+  closeSheet('asgn-edit'); closePanel('asgn');
+  renderAssignments(); updateHomeScreen();
+}
+
+function deleteCurrentAssignment() {
+  assignments = assignments.filter(x=>x.id!==currentAsgnId);
+  save('assignments',assignments);
+  closeSheet('asgn-edit'); closePanel('asgn');
+  renderAssignments(); updateHomeScreen();
+}
+
+function askAIAbout() { askAIAboutAsgn(document.getElementById('pa-name').textContent, document.getElementById('pa-class').textContent); }
+function askAIAboutAsgn(name, cls) { closePanel('asgn'); switchTab('ai'); setTimeout(()=>{ sendMessage('Help me with my '+cls+' assignment: '+name); },200); }
+
+// ═══════════════════════ SCHEDULE ═══════════════════════
+function renderScheduleTabs() {
+  const today = getDay();
+  const now = new Date();
+  const tabs = document.getElementById('day-tabs');
+  const days = [{d:1,l:'Mon'},{d:2,l:'Tue'},{d:3,l:'Wed'},{d:4,l:'Thu'},{d:5,l:'Fri'}];
+  tabs.innerHTML = days.map(({d,l}) => {
+    const diff = d - today;
+    const dt = new Date(now); dt.setDate(now.getDate()+diff);
+    const isToday = d===today;
+    return `<button class="day-chip${isToday?' active':''}" onclick="selectSchedDay(this,${d})">${l}<span class="day-num">${dt.getDate()}</span></button>`;
+  }).join('');
+  const activeDay = today>=1&&today<=5 ? today : 1;
+  renderSchedDay(activeDay);
+  updateSchedCurrentClass();
+}
+
+function selectSchedDay(el, d) {
+  document.querySelectorAll('.day-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderSchedDay(d);
+}
+
+function renderSchedDay(day) {
+  const items = SCHEDULE[day]||[];
+  const now = getNow(); const today = getDay();
+  const list = document.getElementById('sched-list');
+  list.innerHTML = items.map(p => {
+    const parts = p.t.split('–');
+    const isNow = day===today && parts.length>1 && getNow()>=parseTime(parts[0]) && getNow()<parseTime(parts[1]);
+    return `<div class="sched-row">
+      <div class="sched-time">${p.t}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${p.brk?'400':'600'};color:${p.brk?'var(--muted)':'var(--text)'}">${p.n}</div>
+        ${p.tc?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.tc}${p.r?' · '+p.r:''}</div>`:''}
+      </div>
+      ${isNow?'<div class="now-badge">NOW</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function updateSchedCurrentClass() {
+  const {current, next, prog} = getCurrentAndNext();
+  if (current && !current.brk) {
+    document.getElementById('sched-current').textContent = current.n;
+    document.getElementById('sched-teacher').textContent = (current.tc||'')+(current.r?' · '+current.r:'');
+    document.getElementById('sched-prog').style.width = prog+'%';
+    document.getElementById('sched-next-text').textContent = next ? 'Next: '+next.n+' at '+(next.t.split('–')[0]||next.t) : 'Last class';
+  } else {
+    document.getElementById('sched-current').textContent = 'Nothing right now';
+    document.getElementById('sched-teacher').textContent = '';
+    document.getElementById('sched-prog').style.width = '0%';
+    document.getElementById('sched-next-text').textContent = next ? 'Next: '+next.n+' at '+(next.t.split('–')[0]||next.t) : '';
+  }
+}
+
+// ═══════════════════════ CALENDAR ═══════════════════════
+function buildCalendar() {
+  const grid = document.getElementById('cal-grid');
+  document.getElementById('cal-month-name').textContent = MONTH_NAMES[calMonth]+' '+calYear;
+  const first = new Date(calYear,calMonth,1).getDay();
+  const days = DAYS_IN_MONTH[calMonth]+(calMonth===1&&calYear%4===0?1:0);
+  const prev = DAYS_IN_MONTH[(calMonth-1+12)%12];
+  const now = new Date(); const td=now.getDate(),tm=now.getMonth(),ty=now.getFullYear();
+  let html = '';
+  for (let i=0; i<42; i++) {
+    let day, mon=calMonth, yr=calYear, other=false;
+    if (i<first){day=prev-first+i+1;mon=(calMonth-1+12)%12;other=true;}
+    else if(i>=first+days){day=i-first-days+1;mon=(calMonth+1)%12;other=true;}
+    else{day=i-first+1;}
+    const isToday = !other&&day===td&&mon===tm&&yr===ty;
+    const isSel = !other&&day===calSelDay&&mon===calMonth&&yr===calYear;
+    const key = yr+'-'+(mon+1)+'-'+day;
+    const hasEv = events.some(e=>e.date===key);
+    html += `<div class="cal-day${other?' other-month':''}${isToday?' today':''}${isSel&&!isToday?' selected':''}" onclick="${other?'':('calSelectDay('+day+','+mon+','+yr+')')}">
+      ${day}${hasEv&&!other?'<span class="ev-dot-cal"></span>':''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+  showCalDay(calSelDay, calMonth, calYear);
+}
+
+function calSelectDay(day, mon, yr) {
+  calSelDay=day; calMonth=mon; calYear=yr; buildCalendar();
+}
+
+function showCalDay(day, mon, yr) {
+  const key = yr+'-'+(mon+1)+'-'+day;
+  const dt = new Date(yr,mon,day);
+  document.getElementById('cal-day-title').textContent = DAY_NAMES[dt.getDay()]+', '+MONTH_NAMES[mon]+' '+day;
+  const dayEvts = events.filter(e=>e.date===key);
+  const evEl = document.getElementById('cal-events');
+  if (!dayEvts.length) { evEl.innerHTML='<div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">Nothing · tap + to add</div>'; return; }
+  evEl.innerHTML = dayEvts.map(e => `<div class="event-item" onclick="openEditEvent('${e.id}')">
+    <div class="ev-color-dot" style="background:${e.color||'#6b7280'}"></div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${e.type||''}${e.time?' · '+e.time:''}</div></div>
+    <div style="font-size:14px;color:var(--muted)">›</div>
+  </div>`).join('');
+}
+
+function changeMonth(dir) {
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  buildCalendar();
+}
+
+function openEditEvent(id) {
+  const e = events.find(x=>x.id===id);
+  if (!e) return;
+  currentEventId = id;
+  document.getElementById('edit-event-name').value = e.name;
+  document.querySelectorAll('#edit-event-type-row .status-chip').forEach(c=>{c.classList.toggle('on',c.dataset.val===e.type)});
+  buildMiniCal('edit-event-mini-cal','ee-mini');
+  buildTimePicker('edit-event-time-picker','ee-time');
+  openSheet('event-edit');
+}
+
+function saveNewEvent() {
+  const name = document.getElementById('new-event-name').value.trim();
+  if (!name) return;
+  const chip = document.querySelector('#sheet-event-add .status-chip.on');
+  const date = getSelectedMiniDate('add-event-mini-cal');
+  const time = getSelectedTime('add-event-time-picker');
+  events.push({
+    id:'e'+Date.now(), name,
+    type: chip?.dataset.val||'personal',
+    date: date||calYear+'-'+(calMonth+1)+'-'+calSelDay,
+    time: time||'',
+    color: chip?.dataset.val==='school'?'#2563eb':'#4ade80'
+  });
+  save('events',events);
+  closeSheet('event-add');
+  document.getElementById('new-event-name').value='';
+  buildCalendar();
+}
+
+function saveEditEvent() {
+  const e = events.find(x=>x.id===currentEventId);
+  if (!e) return;
+  const chip = document.querySelector('#edit-event-type-row .status-chip.on');
+  const date = getSelectedMiniDate('edit-event-mini-cal');
+  const time = getSelectedTime('edit-event-time-picker');
+  e.name = document.getElementById('edit-event-name').value||e.name;
+  e.type = chip?.dataset.val||e.type;
+  if (date) e.date = date;
+  if (time) e.time = time;
+  save('events',events);
+  closeSheet('event-edit');
+  buildCalendar();
+}
+
+function deleteCurrentEvent() {
+  events = events.filter(x=>x.id!==currentEventId);
+  save('events',events);
+  closeSheet('event-edit');
+  buildCalendar();
+}
+
+// ═══════════════════════ GRADES ═══════════════════════
+function letterGrade(avg) {
+  if(avg>=97)return'A+';if(avg>=93)return'A';if(avg>=90)return'A-';
+  if(avg>=87)return'B+';if(avg>=83)return'B';if(avg>=80)return'B-';
+  if(avg>=77)return'C+';if(avg>=73)return'C';if(avg>=70)return'C-';
+  return'D';
+}
+
+function gpaPoints(avg) {
+  if(avg>=97)return 4.33;if(avg>=93)return 4.0;if(avg>=90)return 3.67;
+  if(avg>=87)return 3.33;if(avg>=83)return 3.0;if(avg>=80)return 2.67;
+  if(avg>=77)return 2.33;if(avg>=73)return 2.0;if(avg>=70)return 1.67;
   return 1.0;
 }
 
-function renderGrades() {
-  if (classes.length === 0) {
-    document.getElementById('grades-list').innerHTML = '<div style="padding:14px 0; color:var(--muted); font-size:13px; text-align:center;">No classes yet — tap + to add</div>';
-    document.getElementById('overall-gpa').textContent = '—';
-    document.getElementById('overall-avg').textContent = '—';
-    return;
-  }
+function letterClass(l) {
+  if(l.startsWith('A'))return'gA';
+  if(l.startsWith('B'))return'gB';
+  if(l.startsWith('C'))return'gC';
+  return'gB';
+}
 
-  let totalGPA = 0, totalCredits = 0, totalAvg = 0, classCount = 0;
-  let html = '';
-
-  classes.forEach((cls, idx) => {
-    const avg = calcClassAvg(cls);
-    const letter = avg !== null ? getLetterGrade(avg) : '—';
-    const lClass = avg !== null ? getLetterClass(letter) : 'B';
-    const displayAvg = avg !== null ? avg : '—';
-
-    if (avg !== null) {
-      const credits = cls.credits || 1;
-      totalGPA += calcGPA(avg) * credits;
-      totalCredits += credits;
-      totalAvg += avg;
-      classCount++;
+function calcClassAvg(cls) {
+  if (!cls.cats||!cls.cats.length) return null;
+  let total=0, wt=0;
+  cls.cats.forEach(cat => {
+    if (cat.grades&&cat.grades.length) {
+      const catAvg = cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length;
+      total += catAvg*(cat.weight/100);
+      wt += cat.weight;
     }
+  });
+  if (!wt) return null;
+  return Math.round((total*(100/wt))*10)/10;
+}
 
-    html += `<div class="grade-row" onclick="openDetail(${idx})">
+function calcOverall() {
+  let totalGPA=0, totalCreds=0, totalAvg=0, cnt=0;
+  classes.forEach(cls => {
+    const avg = calcClassAvg(cls);
+    if (avg!==null) {
+      const c = cls.credits||1;
+      totalGPA += gpaPoints(avg)*c;
+      totalCreds += c;
+      totalAvg += avg;
+      cnt++;
+    }
+  });
+  return {
+    avg: cnt?totalAvg/cnt:null,
+    gpa: totalCreds?totalGPA/totalCreds:null
+  };
+}
+
+function renderGrades() {
+  const {avg, gpa} = calcOverall();
+  document.getElementById('overall-avg-display').textContent = avg!==null ? avg.toFixed(1) : '—';
+  document.getElementById('overall-gpa-display').textContent = gpa!==null ? gpa.toFixed(2) : '—';
+  document.getElementById('home-avg').textContent = avg!==null ? avg.toFixed(1) : '—';
+  if (gpa!==null) document.getElementById('overall-gpa-display').textContent = gpa.toFixed(2);
+
+  const list = document.getElementById('grades-list');
+  if (!classes.length) { list.innerHTML='<div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No classes — tap + to add</div>'; return; }
+  list.innerHTML = classes.map(cls => {
+    const avg = calcClassAvg(cls);
+    const letter = avg!==null ? letterGrade(avg) : '—';
+    const lClass = avg!==null ? letterClass(letter) : 'gB';
+    return `<div class="row" style="cursor:pointer" onclick="openGradeDetail('${cls.id}')">
       <div class="grade-bubble ${lClass}">${letter}</div>
-      <div class="grade-info-col">
-        <div class="grade-cn">${cls.name}</div>
-        <div class="grade-tn">${cls.teacher}</div>
+      <div style="flex:1;margin-left:10px">
+        <div style="font-size:13px;font-weight:600">${cls.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px">${cls.teacher}</div>
       </div>
-      <div class="grade-right-col">
-        <div class="grade-pct">${displayAvg}</div>
-        <div class="chevron">›</div>
-      </div>
+      <div style="font-size:19px;font-weight:700;letter-spacing:-.5px;${avg===null?'color:var(--muted)':''}">${avg!==null?avg:' —'}</div>
+      <div style="font-size:14px;color:var(--muted);margin-left:4px">›</div>
     </div>`;
-  });
-
-  document.getElementById('grades-list').innerHTML = html;
-
-  if (totalCredits > 0) {
-    document.getElementById('overall-gpa').textContent = (totalGPA/totalCredits).toFixed(2);
-  }
-  if (classCount > 0) {
-    document.getElementById('overall-avg').textContent = (totalAvg/classCount).toFixed(1);
-  }
-
-  // update home GPA
-  if (totalCredits > 0) document.getElementById('home-gpa').textContent = (totalGPA/totalCredits).toFixed(2);
+  }).join('');
 }
 
-function openAddClass() {
-  document.getElementById('class-name-input').value = '';
-  document.getElementById('class-teacher-input').value = '';
-  document.getElementById('class-credits-input').value = '1';
-  document.getElementById('class-cats-input').value = 'Tests:40,Homework:30,Quizzes:30';
-  document.getElementById('class-modal').classList.add('open');
-}
-
-function saveClass() {
-  const name = document.getElementById('class-name-input').value.trim();
-  const teacher = document.getElementById('class-teacher-input').value.trim();
-  const credits = parseFloat(document.getElementById('class-credits-input').value) || 1;
-  const catsRaw = document.getElementById('class-cats-input').value.trim();
-
-  if (!name) { alert('Enter a class name'); return; }
-
-  const categories = catsRaw.split(',').map(c => {
-    const [n,w] = c.trim().split(':');
-    return { name: n.trim(), weight: parseFloat(w)||0, grades:[] };
-  });
-
-  classes.push({ name, teacher, credits, categories });
-  save('classes', classes);
-  closeModal('class-modal');
-  renderGrades();
-}
-
-// ─── DETAIL PANEL ───
-function openDetail(idx) {
-  currentClassId = idx;
-  const cls = classes[idx];
+function openGradeDetail(id) {
+  const cls = classes.find(x=>x.id===id);
+  if (!cls) return;
+  currentClassId = id;
   const avg = calcClassAvg(cls);
-  const letter = avg !== null ? getLetterGrade(avg) : '—';
-  const lClass = avg !== null ? getLetterClass(letter) : 'B';
-
-  let catWeightHtml = '';
-  const catColors = ['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
-  cls.categories.forEach((cat, ci) => {
-    const catAvg = cat.grades.length > 0 ? Math.round(cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length) : '—';
-    const barW = Math.min(cat.weight, 100);
-    catWeightHtml += `<div class="weight-row">
-      <div class="weight-name">${cat.name}</div>
-      <div class="weight-pct">${cat.weight}%</div>
-      <div class="bar-track"><div class="bar-fill" style="background:${catColors[ci%catColors.length]};width:${barW}%"></div></div>
-      <div class="weight-score" style="color:${catColors[ci%catColors.length]}">${catAvg}</div>
+  const letter = avg!==null ? letterGrade(avg) : '—';
+  document.getElementById('pd-class').textContent = cls.name;
+  document.getElementById('pd-teacher').textContent = cls.teacher;
+  document.getElementById('pd-avg').textContent = avg!==null?avg:'—';
+  document.getElementById('pd-letter').textContent = letter;
+  // cats
+  const colors = ['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
+  const catEl = document.getElementById('pd-categories');
+  catEl.innerHTML = cls.cats.map((cat,i) => {
+    const ca = cat.grades.length ? Math.round(cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length) : null;
+    return `<div class="cat-bar">
+      <div class="cat-bar-name">${cat.name}</div>
+      <div class="cat-bar-pct">${cat.weight}%</div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="background:${colors[i%colors.length]};width:${cat.weight}%"></div></div>
+      <div class="cat-bar-score" style="color:${colors[i%colors.length]}">${ca!==null?ca:'—'}</div>
     </div>`;
-  });
+  }).join('');
+  // grades
+  renderIndividualGrades(cls, colors);
+  // build cat chips for add grade
+  buildGradeCatChips(cls.cats, 'new-grade-cat-row');
+  openPanel('grade');
+}
 
-  let entriesHtml = '';
-  cls.categories.forEach((cat, ci) => {
-    const catAvg = cat.grades.length > 0 ? Math.round(cat.grades.reduce((a,b)=>a+b.score,0)/cat.grades.length) : '—';
-    let gradesHtml = cat.grades.length === 0
-      ? '<div style="padding:10px 14px; color:var(--muted); font-size:12px;">No grades yet</div>'
-      : '';
-
-    cat.grades.forEach(g => {
-      const scoreColor = g.score >= 90 ? 'var(--green)' : g.score >= 80 ? 'var(--blue)' : g.score >= 70 ? 'var(--yellow)' : 'var(--red)';
-      gradesHtml += `<div class="entry-row">
-        <div><div class="entry-name">${g.name}</div>${g.date ? `<div class="entry-date">${g.date}</div>` : ''}</div>
-        <div class="entry-score" style="color:${scoreColor}">${g.score}</div>
-      </div>`;
-    });
-
-    entriesHtml += `<div class="cat-block">
-      <div class="cat-header">
-        <div class="cat-lbl"><div class="cat-dot" style="background:${catColors[ci%catColors.length]}"></div>${cat.name}</div>
-        <div class="cat-avg-text">Avg: ${catAvg}</div>
-      </div>
-      ${gradesHtml}
+function renderIndividualGrades(cls, colors) {
+  const colors2 = colors||['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
+  const el = document.getElementById('pd-grades');
+  let all = [];
+  cls.cats.forEach((cat,ci) => cat.grades.forEach((g,gi) => all.push({...g,catName:cat.name,catIdx:ci,gradeIdx:gi})));
+  if (!all.length) { el.innerHTML='<div style="padding:14px 0;color:var(--muted);font-size:13px;text-align:center">No grades yet — tap + to add</div>'; return; }
+  el.innerHTML = all.map((g,idx) => {
+    const sc = g.score>=90?'#16a34a':g.score>=80?'#2563eb':g.score>=70?'#ca8a04':'#dc2626';
+    return `<div class="grade-entry" onclick="openEditGrade(${g.catIdx},${g.gradeIdx})">
+      <div><div style="font-size:13px;font-weight:500">${g.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${g.date?g.date+' · ':''}${g.catName}</div></div>
+      <div style="font-size:16px;font-weight:700;color:${sc}">${g.score}</div>
     </div>`;
-  });
-
-  document.getElementById('detail-content').innerHTML = `
-    <div class="detail-hero">
-      <div class="detail-class">${cls.name}</div>
-      <div class="detail-teacher">${cls.teacher}</div>
-      <div class="detail-avg-row">
-        <div>
-          <div class="detail-avg-lbl">Current Average</div>
-          <div class="detail-avg-num">${avg !== null ? avg : '—'}</div>
-        </div>
-        <div class="detail-letter">${letter}</div>
-      </div>
-    </div>
-    <div class="weight-section">
-      <div class="section-title" style="margin:0 0 12px;">Category Breakdown</div>
-      ${catWeightHtml}
-    </div>
-    <div class="entries-section">${entriesHtml}</div>
-  `;
-
-  document.getElementById('detail-panel').classList.add('open');
+  }).join('');
 }
 
-function closeDetail() { document.getElementById('detail-panel').classList.remove('open'); }
-
-function openAddGrade() {
-  if (currentClassId === null) return;
-  const cls = classes[currentClassId];
-  document.getElementById('grade-name-input').value = '';
-  document.getElementById('grade-score-input').value = '';
-  document.getElementById('grade-date-input').value = '';
-
-  const catColors = ['#2563eb','#16a34a','#ca8a04','#dc2626','#7c3aed'];
-  let catHtml = '';
-  cls.categories.forEach((cat, i) => {
-    catHtml += `<div class="cat-chip ${i===0?'on':''}" onclick="selectGradeCat(this,${i})" style="${i===0?'border-color:var(--accent);background:var(--accent);color:white':''}">${cat.name}</div>`;
-  });
-  document.getElementById('cat-select-row').innerHTML = catHtml;
-  selectedCat = 0;
-
-  document.getElementById('grade-sheet-backdrop').classList.add('open');
-  document.getElementById('grade-sheet').classList.add('open');
+function buildGradeCatChips(cats, rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.innerHTML = cats.map((c,i) => `<div class="status-chip${i===0?' on':''}" data-cat-idx="${i}" onclick="selChip(this)">${c.name}</div>`).join('');
 }
 
-function selectGradeCat(el, idx) {
-  document.querySelectorAll('#cat-select-row .cat-chip').forEach(c => { c.classList.remove('on'); c.style.borderColor='transparent'; c.style.background='var(--surface)'; c.style.color='var(--muted)'; });
-  el.classList.add('on');
-  el.style.borderColor = 'var(--accent)';
-  el.style.background = 'var(--accent)';
-  el.style.color = 'white';
-  selectedCat = idx;
+function openEditGrade(catIdx, gradeIdx) {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls) return;
+  currentGradeIdx = {catIdx, gradeIdx};
+  const g = cls.cats[catIdx].grades[gradeIdx];
+  document.getElementById('edit-grade-name').value = g.name;
+  document.getElementById('edit-grade-score').value = g.score;
+  document.getElementById('edit-grade-date').value = g.date||'';
+  buildGradeCatChips(cls.cats,'edit-grade-cat-row');
+  const chips = document.querySelectorAll('#edit-grade-cat-row .status-chip');
+  chips.forEach((c,i)=>c.classList.toggle('on',i===catIdx));
+  openSheet('grade-edit');
 }
 
-function closeAddGrade() {
-  document.getElementById('grade-sheet-backdrop').classList.remove('open');
-  document.getElementById('grade-sheet').classList.remove('open');
+function saveNewGrade() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls) return;
+  const name = document.getElementById('new-grade-name').value.trim();
+  const score = parseFloat(document.getElementById('new-grade-score').value);
+  if (!name||isNaN(score)) return;
+  const chip = document.querySelector('#new-grade-cat-row .status-chip.on');
+  const catIdx = chip ? parseInt(chip.dataset.catIdx) : 0;
+  cls.cats[catIdx].grades.push({name, score, date:document.getElementById('new-grade-date').value});
+  save('classes',classes);
+  closeSheet('grade-add');
+  renderGrades();
+  openGradeDetail(currentClassId);
 }
 
-function saveGrade() {
-  if (currentClassId === null) return;
-  const name = document.getElementById('grade-name-input').value.trim();
-  const score = parseFloat(document.getElementById('grade-score-input').value);
-  const date = document.getElementById('grade-date-input').value.trim();
-  if (!name) { alert('Enter assignment name'); return; }
-  if (isNaN(score) || score < 0 || score > 100) { alert('Enter a valid score (0-100)'); return; }
-  classes[currentClassId].categories[selectedCat].grades.push({ name, score, date });
-  save('classes', classes);
-  closeAddGrade();
-  openDetail(currentClassId);
+function saveEditGrade() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls||!currentGradeIdx) return;
+  const {catIdx,gradeIdx} = currentGradeIdx;
+  const g = cls.cats[catIdx].grades[gradeIdx];
+  const chip = document.querySelector('#edit-grade-cat-row .status-chip.on');
+  const newCatIdx = chip ? parseInt(chip.dataset.catIdx) : catIdx;
+  g.name = document.getElementById('edit-grade-name').value||g.name;
+  g.score = parseFloat(document.getElementById('edit-grade-score').value)||g.score;
+  g.date = document.getElementById('edit-grade-date').value;
+  if (newCatIdx !== catIdx) {
+    cls.cats[catIdx].grades.splice(gradeIdx,1);
+    cls.cats[newCatIdx].grades.push({name:g.name,score:g.score,date:g.date});
+  }
+  save('classes',classes);
+  closeSheet('grade-edit');
+  renderGrades();
+  openGradeDetail(currentClassId);
+}
+
+function deleteCurrentGrade() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls||!currentGradeIdx) return;
+  const {catIdx,gradeIdx} = currentGradeIdx;
+  cls.cats[catIdx].grades.splice(gradeIdx,1);
+  save('classes',classes);
+  closeSheet('grade-edit');
+  renderGrades();
+  openGradeDetail(currentClassId);
+}
+
+function saveNewClass() {
+  const name = document.getElementById('new-class-name').value.trim();
+  if (!name) return;
+  const catsRaw = document.getElementById('new-class-cats').value||'Tests:50,Homework:30,Quizzes:20';
+  const cats = catsRaw.split(',').map(c=>{const[n,w]=c.trim().split(':');return{name:n.trim(),weight:parseFloat(w)||0,grades:[]};});
+  classes.push({id:'c'+Date.now(),name,teacher:document.getElementById('new-class-teacher').value,credits:parseFloat(document.getElementById('new-class-credits').value)||1,cats});
+  save('classes',classes);
+  closeSheet('class-add');
   renderGrades();
 }
 
-// ═══════════════════════════════════════════════════════
-//  AI CHAT
-// ═══════════════════════════════════════════════════════
+function saveGradeSystem() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls) return;
+  cls.name = document.getElementById('gs-name').value||cls.name;
+  cls.teacher = document.getElementById('gs-teacher').value||cls.teacher;
+  cls.credits = parseFloat(document.getElementById('gs-credits').value)||cls.credits;
+  const catsRaw = document.getElementById('gs-cats').value;
+  if (catsRaw) {
+    cls.cats = catsRaw.split(',').map(c=>{const[n,w]=c.trim().split(':');return{name:n.trim(),weight:parseFloat(w)||0,grades:[]};});
+  }
+  save('classes',classes);
+  closeSheet('grade-system-edit');
+  renderGrades();
+  openGradeDetail(currentClassId);
+}
+
+function deleteCurrentClass() {
+  classes = classes.filter(x=>x.id!==currentClassId);
+  save('classes',classes);
+  closeSheet('grade-system-edit');
+  closePanel('grade');
+  renderGrades();
+}
+
+function calcWhatINeed() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  const target = parseFloat(document.getElementById('win-target').value);
+  const weight = parseFloat(document.getElementById('win-weight').value);
+  const resultEl = document.getElementById('win-result');
+  if (!cls||isNaN(target)||isNaN(weight)||weight<=0||weight>100) {resultEl.textContent='';return;}
+  const current = calcClassAvg(cls);
+  if (current===null) {resultEl.textContent='Add some grades first';return;}
+  const needed = (target - current*(1-weight/100))/(weight/100);
+  if (needed<0) resultEl.textContent='You already have above '+target+'! 🎉';
+  else if (needed>100) resultEl.textContent='That target may not be reachable this assignment (need '+Math.round(needed)+')';
+  else resultEl.textContent='You need a '+Math.round(needed)+' on a '+weight+'% weight assignment to reach '+target;
+}
+
+// Open grade system edit sheet
+document.getElementById('sheet-grade-system-edit').addEventListener('click',e=>e.stopPropagation());
+function openGradeSystemEdit() {
+  const cls = classes.find(x=>x.id===currentClassId);
+  if (!cls) return;
+  document.getElementById('gs-name').value = cls.name;
+  document.getElementById('gs-teacher').value = cls.teacher;
+  document.getElementById('gs-credits').value = cls.credits;
+  document.getElementById('gs-cats').value = cls.cats.map(c=>c.name+':'+c.weight).join(',');
+}
+// Override the button
+document.querySelectorAll('.panel-action').forEach(btn=>{if(btn.getAttribute('onclick')==="openSheet('grade-system-edit')")btn.addEventListener('click',openGradeSystemEdit,{capture:true});});
+
+// ═══════════════════════ MINI CAL HELPERS ═══════════════════════
+function buildMiniCal(containerId, stateKey) {
+  if (!miniCals[stateKey]) miniCals[stateKey] = {m:calMonth, y:calYear, sel:null};
+  const state = miniCals[stateKey];
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const first = new Date(state.y,state.m,1).getDay();
+  const days = DAYS_IN_MONTH[state.m]+(state.m===1&&state.y%4===0?1:0);
+  const prev = DAYS_IN_MONTH[(state.m-1+12)%12];
+  const now = new Date(); const td=now.getDate(),tm=now.getMonth(),ty=now.getFullYear();
+  container.innerHTML = `
+    <div class="mini-month-nav">
+      <button class="mini-month-btn" onclick="miniCalPrev('${stateKey}','${containerId}')">‹</button>
+      <div class="mini-month-name">${MONTH_NAMES[state.m]} ${state.y}</div>
+      <button class="mini-month-btn" onclick="miniCalNext('${stateKey}','${containerId}')">›</button>
+    </div>
+    <div class="mini-cal-header">${'SMTWTFS'.split('').map(d=>`<div class="mini-cal-label">${d}</div>`).join('')}</div>
+    <div class="mini-cal-grid" id="${containerId}-grid">
+      ${Array.from({length:35},(_,i)=>{
+        let day,mon=state.m,yr=state.y,other=false;
+        if(i<first){day=prev-first+i+1;mon=(state.m-1+12)%12;other=true;}
+        else if(i>=first+days){day=i-first-days+1;mon=(state.m+1)%12;other=true;}
+        else{day=i-first+1;}
+        const isToday=!other&&day===td&&mon===tm&&yr===ty;
+        const isSel=state.sel&&!other&&day===state.sel;
+        return `<div class="mini-day${other?' other-m':''}${isToday?' today':''}${isSel?' selected-d':''}" onclick="miniSelectDay('${stateKey}','${containerId}',${day},${other})">${day}</div>`;
+      }).join('')}
+    </div>`;
+}
+
+function miniCalPrev(sk,cid){const s=miniCals[sk];s.m--;if(s.m<0){s.m=11;s.y--;}buildMiniCal(cid,sk);}
+function miniCalNext(sk,cid){const s=miniCals[sk];s.m++;if(s.m>11){s.m=0;s.y++;}buildMiniCal(cid,sk);}
+function miniSelectDay(sk,cid,day,other){if(other)return;miniCals[sk].sel=day;buildMiniCal(cid,sk);}
+function getSelectedMiniDate(containerId) {
+  const sk = Object.keys(miniCals).find(k=>miniCals[k]&&document.getElementById(containerId));
+  if (!sk||!miniCals[sk]||!miniCals[sk].sel) return null;
+  const s=miniCals[sk];
+  return s.y+'-'+(s.m+1)+'-'+s.sel;
+}
+function formatDate(dateStr) {
+  const [y,m,d] = dateStr.split('-');
+  return MONTH_NAMES[parseInt(m)-1]+' '+d;
+}
+
+function buildTimePicker(containerId, stateKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let hrs='',mins='',ampm='';
+  for(let h=1;h<=12;h++)hrs+=`<div class="time-item${h===11?' on':''}" onclick="this.closest('.time-col').querySelectorAll('.time-item').forEach(x=>x.classList.remove('on'));this.classList.add('on')">${h<10?'0'+h:h}</div>`;
+  for(let m=0;m<60;m+=5)mins+=`<div class="time-item${m===59?' on':''}" onclick="this.closest('.time-col').querySelectorAll('.time-item').forEach(x=>x.classList.remove('on'));this.classList.add('on')">${m<10?'0'+m:m}</div>`;
+  ampm=`<div class="time-item on" onclick="this.closest('.time-col').querySelectorAll('.time-item').forEach(x=>x.classList.remove('on'));this.classList.add('on')">AM</div><div class="time-item" onclick="this.closest('.time-col').querySelectorAll('.time-item').forEach(x=>x.classList.remove('on'));this.classList.add('on')">PM</div>`;
+  container.innerHTML=`<div class="time-picker"><div class="time-col">${hrs}</div><div class="time-sep">:</div><div class="time-col">${mins}</div><div class="time-col">${ampm}</div></div>`;
+}
+
+function getSelectedTime(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return '';
+  const cols = container.querySelectorAll('.time-col');
+  if (!cols.length) return '';
+  const h = cols[0]?.querySelector('.on')?.textContent||'';
+  const m = cols[1]?.querySelector('.on')?.textContent||'';
+  const ap = cols[2]?.querySelector('.on')?.textContent||'';
+  return h&&m&&ap ? h+':'+m+' '+ap : '';
+}
+
+// ═══════════════════════ CHIP HELPERS ═══════════════════════
+function selChip(el) {
+  el.closest('.status-row').querySelectorAll('.status-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ═══════════════════════ AI CHAT ═══════════════════════
 function buildSystemPrompt() {
   const now = new Date();
   const day = DAY_NAMES[now.getDay()];
-  const time = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
-  const { current, next } = getCurrentAndNext();
+  const time = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const {current,next} = getCurrentAndNext();
+  const {avg,gpa} = calcOverall();
+  const classInfo = classes.map(c=>{
+    const a=calcClassAvg(c);
+    return `${c.name} (${c.teacher}): ${a!==null?a+'%':'no grades entered yet'}`;
+  }).join(', ');
+  const pending = assignments.filter(a=>a.status!=='dn').map(a=>`${a.name} (${a.className}, due ${a.due})`).join(', ')||'None';
 
-  let classInfo = classes.map(c => {
-    const avg = calcClassAvg(c);
-    return `${c.name} (${c.teacher}): ${avg !== null ? avg + '%' : 'no grades yet'}`;
-  }).join(', ') || 'No classes added yet';
-
-  let pendingWork = assignments.filter(a => a.status !== 'dn').map(a => `${a.name} (${a.className}, due ${a.due})`).join(', ') || 'None';
-
-  return `You are EvanAI, a personal AI assistant built specifically for Evan Mosseri, a 10th grade student at a Jewish day school in Brooklyn, NY.
+  return `You are EvanAI — a personal AI assistant built specifically for Evan Mosseri, a 10th grade student (Grade 10, HN track) at a Jewish day school in Brooklyn, NY. You can do ANYTHING he asks.
 
 EVAN'S PROFILE:
 - Grade 10, Homeroom 2-HN, Semester 2
-- Ambitious, entrepreneurial, wants to build wealth and make his family proud
-- Co-founded BackwardsNYC (hoodie brand) with his brother Mark, serves as Creative Director
-- Building Vestis (custom suit e-commerce business)
-- Interested in finance, business, aviation, luxury travel
+- Extremely ambitious, entrepreneurial, wants to build wealth and make his family proud
+- Co-founded BackwardsNYC (hoodie brand) with brother Mark (Evan = Creative Director)
+- Building Vestis (direct-to-consumer custom suit/shirt e-commerce, factory in China)
+- Has siblings: Ray, Jacob, Mark, Michael, Sarah. Grandmother: Nona
 - Plays football and basketball
-- Has siblings: Ray, Jacob, Mark, Michael, Sarah
-- Grandmother: Nona
+- Interested in finance, business, aviation, luxury travel
 
-RIGHT NOW:
+CURRENT MOMENT:
 - It's ${day} at ${time}
-- Current class: ${current ? current.name + ' with ' + current.teacher : 'No class right now'}
-- Next class: ${next ? next.name + ' at ' + next.start : 'None'}
+- Current class: ${current&&!current.brk ? current.n+' with '+(current.tc||'') : 'No class right now'}
+- Next class: ${next&&!next.brk ? next.n+' at '+(next.t.split('–')[0]||next.t) : 'None'}
 
-HIS CLASSES:
+HIS CLASSES & GRADES:
 ${classInfo}
 
 PENDING ASSIGNMENTS:
-${pendingWork}
+${pending}
+
+OVERALL: Average ${avg!==null?avg.toFixed(1):'not calculated'}, GPA ${gpa!==null?gpa.toFixed(2):'not calculated'}
+
+GRADE SCALE (4.33 system):
+A+ 4.33 (97-100), A 4.00 (93-96), A- 3.67 (90-92), B+ 3.33 (87-89), B 3.00 (83-86), B- 2.67 (80-82), C+ 2.33 (77-79), C 2.00 (73-76), C- 1.67 (70-72), D 1.00 (65-69)
+
+CREDITS: Most classes = 1 credit. Visual Arts = 0.5. PE = 0.5. SICHA = 0 credits.
+
+WHAT YOU CAN DO (everything):
+- School: explain any concept, write essays/outlines, find quotes, analyze themes, Hebrew/English translation, Gemara/Talmud help, Tanakh analysis, Halakhah questions
+- Grade help: calculate averages, what grade he needs, GPA impact, teacher emails
+- Study: generate study guides, practice quizzes, flashcards, test prep
+- Businesses: BackwardsNYC strategy, branding, marketing, pricing, Vestis product/sales advice
+- Personal: schedule planning, life advice, health questions, productivity, goals
+- If he sends a Veracross screenshot: describe the grades you see and tell him to manually update them, since you cannot directly access the app's data
 
 COMMUNICATION STYLE:
-- Be direct, casual, smart, and human
-- Do NOT sound robotic or overly formal
-- Keep responses concise unless depth is needed
-- Be honest — don't just agree with him if he's wrong
-- Sound like a knowledgeable friend, not a corporate assistant
-- He often wants: shorter responses, direct answers, things that sound like him`;
+- Direct, casual, smart, human — NOT corporate or robotic
+- Short answers unless depth is needed
+- Honest — push back if he's wrong
+- Sound like a knowledgeable friend, not an AI assistant
+- He hates long intros and filler. Get to the point.`;
 }
 
-async function sendMessage(overrideText) {
-  const input = document.getElementById('chat-input');
-  const text = overrideText || input.value.trim();
-  if (!text) return;
+async function sendMessage(text) {
+  const input = document.getElementById('ai-input');
+  const msg = text || input.value.trim();
+  if (!msg) return;
 
-  const apiKey = getApiKey();
-  if (!apiKey) { alert('No API key found. Please refresh and enter your key.'); return; }
-
-  // add user message
-  addMessage(text, 'user');
-  if (!overrideText) { input.value = ''; input.style.height = 'auto'; }
+  addChatMsg(msg,'user');
+  if (!text) { input.value=''; input.style.height='auto'; }
   document.getElementById('send-btn').disabled = true;
 
-  // add typing indicator
-  const typingId = 'typing-' + Date.now();
-  const typingEl = document.createElement('div');
-  typingEl.className = 'bubble-ai';
-  typingEl.id = typingId;
-  typingEl.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
-  document.getElementById('chat-messages').appendChild(typingEl);
-  scrollChat();
+  chatHistory.push({role:'user',content:msg});
 
-  chatHistory.push({ role:'user', content: text });
+  // typing indicator
+  const typingId = 'typing'+Date.now();
+  const typing = document.createElement('div');
+  typing.className = 'msg-ai';
+  typing.id = typingId;
+  typing.innerHTML = '<div style="display:flex;gap:4px;align-items:center;padding:2px 0"><div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:pulse 1s infinite"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:pulse 1s .2s infinite"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--muted);animation:pulse 1s .4s infinite"></div></div>';
+  document.getElementById('chat-messages').appendChild(typing);
+  scrollChat();
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: buildSystemPrompt(),
-        messages: chatHistory
-      })
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({messages:chatHistory, systemPrompt:buildSystemPrompt()})
     });
-
     const data = await res.json();
-    typingEl.remove();
-
-    if (data.content && data.content[0]) {
-      const reply = data.content[0].text;
-      chatHistory.push({ role:'assistant', content: reply });
-      addMessage(reply, 'ai');
-    } else {
-      addMessage('Something went wrong. Try again.', 'ai');
-    }
+    document.getElementById(typingId)?.remove();
+    const reply = data.content || data.error || 'Something went wrong.';
+    chatHistory.push({role:'assistant',content:reply});
+    addChatMsg(reply,'ai');
   } catch(e) {
-    typingEl.remove();
-    addMessage('Connection error. Check your internet and try again.', 'ai');
+    document.getElementById(typingId)?.remove();
+    addChatMsg('Connection error. Make sure you\'re connected and try again.','ai');
   }
-
   document.getElementById('send-btn').disabled = false;
-  scrollChat();
 }
 
-function addMessage(text, role) {
+function addChatMsg(text, role) {
   const el = document.createElement('div');
-  el.className = role === 'user' ? 'bubble-user' : 'bubble-ai';
-  if (role === 'ai') el.innerHTML = `<div class="ai-from">EvanAI</div>${text.replace(/\n/g,'<br>')}`;
+  el.className = role==='user'?'msg-user':'msg-ai';
+  if (role==='ai') el.innerHTML = `<div class="ai-sender">EvanAI</div>${text.replace(/\n/g,'<br>')}`;
   else el.textContent = text;
   document.getElementById('chat-messages').appendChild(el);
   scrollChat();
@@ -1340,49 +1683,31 @@ function scrollChat() {
   c.scrollTop = c.scrollHeight;
 }
 
-function preset(text) {
-  goTo('ai', document.querySelector('.nav-tab:last-child'));
-  setTimeout(() => sendMessage(text), 100);
-}
+function aiPreset(text) { sendMessage(text); }
+function handleEnter(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el) { el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 
-function askAIAbout(assignName, className) {
-  goTo('ai', document.querySelector('.nav-tab:last-child'));
-  setTimeout(() => sendMessage(`Help me with my ${className} assignment: ${assignName}`), 100);
-}
-
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-}
-
-// ═══════════════════════════════════════════════════════
-//  MODALS
-// ═══════════════════════════════════════════════════════
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// ═══════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════
-function initApp() {
-  updateCurrentClass();
-  setInterval(updateCurrentClass, 30000); // update every 30s
-  buildDayTabs();
-  renderAssignments();
-  renderGrades();
-}
-
-// Check if API key already saved
+// ═══════════════════════ INIT ═══════════════════════
 window.addEventListener('load', () => {
-  const key = getApiKey();
-  if (key) {
-    document.getElementById('setup-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    initApp();
-  }
+  // Build mini cals on sheet open
+  document.getElementById('sheet-asgn-add').addEventListener('transitionend', () => {
+    buildMiniCal('add-asgn-mini-cal','add-a');
+    buildTimePicker('add-asgn-time-picker','add-a-time');
+  });
+  document.getElementById('sheet-event-add').addEventListener('transitionend', () => {
+    buildMiniCal('add-event-mini-cal','add-e');
+    buildTimePicker('add-event-time-picker','add-e-time');
+  });
+
+  // Fix grade system edit button
+  document.querySelector('[onclick="openSheet(\'grade-system-edit\')"]')?.addEventListener('click', openGradeSystemEdit, {capture:true});
+
+  updateHomeScreen();
+  setInterval(updateHomeScreen, 60000);
+  renderScheduleTabs();
+  buildCalendar();
+  renderGrades();
+  renderAssignments();
 });
 </script>
 </body>
