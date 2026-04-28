@@ -18,20 +18,20 @@
   --gr-bg:#dcfce7;--yw-bg:#fef9c3;--rd-bg:#fee2e2;--bl-bg:#dbeafe;
   --nh:68px;
 }
-html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow:hidden}
+html,body{height:100%;width:100%;max-width:100%;overflow-x:hidden;font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow:hidden}
 
 /* APP */
 #app{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;max-width:430px;margin:0 auto;position:relative;overflow:hidden;background:var(–bg)}
 
 /* SCREENS */
-.scr{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 18px calc(var(–nh) + 16px);-webkit-overflow-scrolling:touch;position:relative}
+.scr{display:none;flex:1;overflow-y:auto;overflow-x:hidden;width:100%;padding:0 18px calc(var(–nh) + 16px);-webkit-overflow-scrolling:touch;position:relative}
 .scr.on{display:block}
 .scr::-webkit-scrollbar{display:none}
-#scr-ai{display:none;flex-direction:column;padding:0;overflow:hidden}
+#scr-ai{display:none;flex-direction:column;padding:0;overflow:hidden;width:100%;height:calc(100vh - var(–nh));position:relative}
 #scr-ai.on{display:flex}
 
 /* BOTTOM NAV */
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(–nh);background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(–bd);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;z-index:100}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;overflow:hidden;height:var(–nh);background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(–bd);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px;z-index:100}
 .ntab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:500;color:var(–mu2);cursor:pointer;transition:color .15s;min-width:44px;padding:2px 0}
 .ntab.on{color:var(–bl)}
 .ni{font-size:21px;line-height:1}
@@ -1263,12 +1263,15 @@ function showToast(msg) {
 // ══════════════════════════════════════
 // TIME UTILS
 // ══════════════════════════════════════
-function pt(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function pt(t){const[h,m]=t.split(':').map(Number);const mins=h*60+(m||0);return(h<7)?mins+720:mins;}
 function nowMin(){const n=new Date();return n.getHours()*60+n.getMinutes();}
 function todayDay(){return new Date().getDay();}
 
 function getCN(){
   const day=todayDay();const sched=SCHED[day];if(!sched)return{cur:null,nxt:null,prog:0};
+  const rawH=new Date().getHours();
+  // Outside school hours (before 7:45 AM or after 4:36 PM) show nothing
+  if(rawH<7||rawH>=17)return{cur:null,nxt:null,prog:0};
   const now=nowMin();let cur=null,nxt=null,prog=0;
   for(let i=0;i<sched.length;i++){
     const p=sched[i];const pts=p.t.split('–');if(pts.length<2)continue;
@@ -1338,10 +1341,20 @@ function renderTodos(){
 }
 
 function addTodo(){
-  const text=prompt('Add to-do:');
-  if(!text||!text.trim())return;
-  todos.push({text:text.trim(),done:false});
-  sv('todos',todos);renderTodos();
+  // create inline input
+  const list=document.getElementById('todo-list');
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--bd)';
+  div.innerHTML='<div style="width:5px;height:5px;border-radius:50%;background:var(--mu);flex-shrink:0;margin:0 4px"></div><input autofocus style="flex:1;font-size:13px;font-weight:500;border:none;outline:none;font-family:Inter,sans-serif;background:transparent" placeholder="Add a to-do..." id="todo-inp-new"><button style="font-size:13px;font-weight:600;color:var(--bl);background:none;border:none;cursor:pointer;padding:0 4px" onclick="confirmTodo()">Add</button>';
+  list.appendChild(div);
+  setTimeout(()=>document.getElementById('todo-inp-new')?.focus(),100);
+}
+function confirmTodo(){
+  const inp=document.getElementById('todo-inp-new');
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(text){todos.push({text,done:false});sv('todos',todos);}
+  renderTodos();
 }
 
 function toggleTodo(i){todos[i].done=!todos[i].done;sv('todos',todos);renderTodos();}
@@ -2171,8 +2184,20 @@ function selSch(el){
 }
 
 // class dropdown
+const CLASS_TEACHERS={
+  'Talmud 2H-B':'Rabbi Mark','Tanakh 2H-B':'Rabbi Harari','English 2HN':'Ms. Cohen',
+  'Global History':'Mr. Engel','Halakhah 2H-B':'Rabbi Tokayer','Geometry':'Dr. Shahar',
+  'Chemistry 2HN':'Mrs. Goldberg','Hebrew Lang/Lit':'Mrs. Theil','Visual Arts':'Ms. Erdos',
+  'Physical Education':'Mr. Kennedy','SICHA':'Rabbi Churba'
+};
 document.getElementById('na-class')?.addEventListener('change',function(){
   document.getElementById('na-class-other').style.display=this.value==='Other'?'block':'none';
+  const teacher=CLASS_TEACHERS[this.value];
+  if(teacher)document.getElementById('na-teacher').value=teacher;
+});
+document.getElementById('ea-class')?.addEventListener('change',function(){
+  const teacher=CLASS_TEACHERS[this.value];
+  if(teacher)document.getElementById('ea-teacher').value=teacher;
 });
 
 // ══════════════════════════════════════
