@@ -1379,8 +1379,8 @@ async function sendAI(override){
   const tid='t'+Date.now();const tel=document.createElement('div');tel.className='msg-ai';tel.id=tid;tel.innerHTML='<div style="display:flex;gap:4px;padding:4px 0"><div style="width:6px;height:6px;border-radius:50%;background:var(--mu2);animation:blink 1s infinite"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--mu2);animation:blink 1s .2s infinite"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--mu2);animation:blink 1s .4s infinite"></div></div>';
   document.getElementById('ai-msgs').appendChild(tel);scrollAI();
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:buildSys(),messages:chatHistory})});
-    const data=await res.json();if(data.content)data.content=data.content[0]?.text||'';document.getElementById(tid)?.remove();
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHistory,systemPrompt:buildSys()})});
+    const data=await res.json();document.getElementById(tid)?.remove();
     const reply=data.content||data.error||'Something went wrong.';
     chatHistory.push({role:'assistant',content:reply});addMsg(reply,'ai');
   }catch(e){document.getElementById(tid)?.remove();addMsg('Connection error — make sure api/chat.js is uploaded to GitHub and ANTHROPIC_API_KEY is set in Vercel.','ai');}
@@ -1388,7 +1388,7 @@ async function sendAI(override){
 }
 
 async function aiCallSimple(prompt){
-  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:buildSys(),messages:[{role:'user',content:prompt}]})});const data=await res.json();return data.content?.[0]?.text||'Error';}catch(e){return'Connection error';}
+  try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],systemPrompt:buildSys()})});const data=await res.json();return data.content||'Error';}catch(e){return'Connection error';}
 }
 
 function addMsg(text,role){
@@ -1435,16 +1435,7 @@ function selSch(el){el.closest('.srow')?.querySelectorAll('.sch').forEach(c=>c.c
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-function getKey(){return ld('ak','')||'';}
-function setKey(k){sv('ak',k);showToast('API key saved!');}
 window.addEventListener('load',()=>{
-  // Check if API key is set
-  if(!getKey()){
-    setTimeout(()=>{
-      const k=prompt('Enter your Anthropic API key (sk-ant-...) to enable AI:');
-      if(k&&k.startsWith('sk-ant-'))setKey(k);
-    },1000);
-  }
 
   updateHome();setInterval(updateHome,60000);
   renderSchedTabs();setInterval(updateSchedNow,60000);
